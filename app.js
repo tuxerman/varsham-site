@@ -158,29 +158,40 @@
     const fest = festText(d);
     const festHtml = fest ? `<span class="fest ml">${esc(fest)}</span>` : "";
 
-    // month tag: bold on a real month-start, muted label on the grid's first day
+    // Kollavarsham label for the top strip:
+    //  - month-start day  -> "മകരം 1"  (bold)
+    //  - grid's first day -> "ധനു 17"  (muted — month already in progress)
+    //  - every other day  -> just the KV day number
+    let kvLabel, kvCls;
+    if (d.monthStart)   { kvLabel = `${esc(d.kvMonth.ml)} 1`;        kvCls = "kvlabel start"; }
+    else if (isFirst)   { kvLabel = `${esc(d.kvMonth.ml)} ${d.kv}`;  kvCls = "kvlabel muted"; }
+    else                { kvLabel = String(d.kv);                    kvCls = "kvlabel"; }
+
+    // month tag kept for the DESKTOP grid (top-right of the cell)
     let tag = "";
     if (d.monthStart) tag = `<span class="mtag">${esc(d.kvMonth.ml)} 1</span>`;
     else if (isFirst) tag = `<span class="mtag muted">${esc(d.kvMonth.ml)}</span>`;
     const kvHtml = d.monthStart ? "" : `<span class="kv">${d.kv}</span>`;
 
-    // One structure. CSS reflows it per breakpoint:
+    // One structure, reflowed per breakpoint by CSS.
     //  desktop -> .head above, .num left / .aside right, .pan pinned bottom
-    //  phone   -> .num becomes the left date column, .head + .pan sit in a right block
+    //  phone   -> row1: weekday + KV label ... festival (right)
+    //             row2: big date
+    //             row3: nakshatram / tithi
     cell.innerHTML =
       `<div class="head">${kvHtml}${tag}</div>` +
-      `<div class="num">` +
+      `<div class="topline">` +
         `<span class="wd">${d.wd}</span>` +
-        `<span class="date disp">${d.g}</span>` +
-        `<span class="kv-b">${d.monthStart ? esc(d.kvMonth.ml) + " 1" : d.kv}</span>` +
+        `<span class="${kvCls}">${kvLabel}</span>` +
+        `<span class="fest-r ml">${fest ? esc(fest) : ""}</span>` +
       `</div>` +
+      `<div class="num"><span class="date disp">${d.g}</span></div>` +
       `<div class="aside">${moon}${festHtml}</div>` +
       `<div class="pan">` +
         `<div class="nak ml">${esc(d.nak.ml)} <span class="nz">${d.nak.endNazhika}</span>` +
           (moon ? `<span class="moon-slot">${moon}</span>` : "") +
         `</div>` +
         `<div class="tithi ml">${esc(d.tithi.ml)} <span class="nz">${d.tithi.endNazhika}</span></div>` +
-        (fest ? `<div class="fest-line ml">${esc(fest)}</div>` : "") +
       `</div>`;
     return cell;
   }

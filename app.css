@@ -286,13 +286,13 @@ a:hover { color: #7d2c20; }
 }
 .cell .mtag.muted { color: var(--muted); }
 
+.cell .topline { display: none; }             /* mobile list mode only */
+
 .cell .num {
   grid-column: 1;
   grid-row: 2;
   margin-top: 3px;
 }
-.cell .num .wd,
-.cell .num .kv-b { display: none; }          /* only shown in mobile list mode */
 .cell .num .date {
   font-family: "Fraunces", Georgia, serif;
   font-size: 40px;
@@ -425,105 +425,127 @@ a:hover { color: #7d2c20; }
     gap: 0;
     background: var(--card);
     border: none;
+    overflow-x: hidden;
   }
 
-  /* Phone list row: a CSS grid — .num is the left column (spans both body rows),
-     .head + .aside share the top-right row, .pan fills the bottom-right row. */
+  /* Phone list row: 2-col grid.
+       row 1  (spans both cols) = .topline — weekday · KV/month label ···· festival
+       row 2  col 1 = big date (.num) · col 2 = nakshatram / tithi (.pan)
+     .head and .aside are desktop-only.                                        */
   .cell {
     min-height: 0;
-    padding: 15px 20px;
+    padding: 12px 20px 14px;
     border-bottom: 1px solid var(--rule-soft);
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    column-gap: 12px;
-    row-gap: 2px;
+    grid-template-columns: 54px minmax(0, 1fr);
+    column-gap: 14px;
+    row-gap: 4px;
+    align-items: start;
   }
-  .cell.empty { display: none; }                    /* no lead-in cells in list mode */
+  .cell.empty { display: none; }
   .cell.month-start { box-shadow: inset 0 3px 0 0 var(--vermilion); }  /* TOP border on phone */
   .cell.today { box-shadow: inset 3px 0 0 0 var(--vermilion); }
   .cell.today.month-start { box-shadow: inset 0 3px 0 0 var(--vermilion), inset 3px 0 0 0 var(--vermilion); }
 
-  .cell .num {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    align-self: start;
-    text-align: center;
+  .cell .head,
+  .cell .aside { display: none; }
+
+  /* top strip — sits on the same visual line as the SUN/MON header would */
+  .cell .topline {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 0;
+    align-items: baseline;
+    gap: 8px;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-width: 0;
   }
-  .cell .num .wd {
-    display: block;
+  .cell .topline .wd {
     font-family: "Fraunces", Georgia, serif;
     font-size: 10px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--faint);
+    flex-shrink: 0;
   }
-  .cell.sun .num .wd,
-  .cell.sat .num .wd { color: #c56b5c; }
-  .cell .num .date { font-size: 34px; margin-top: 1px; }
-  .cell .num .kv-b {
-    display: block;
+  .cell.sun .topline .wd,
+  .cell.sat .topline .wd { color: #c56b5c; }
+  .cell .topline .kvlabel {
     font-family: "Fraunces", Georgia, serif;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--vermilion);
-    margin-top: 3px;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
   }
-
-  /* mobile: nakshatram line gets the moon at its right end; month tag / festival
-     drop to their own lines so nothing is clipped */
-  .cell .head {
-    grid-column: 2;
-    grid-row: 1;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    min-height: 0;
+  .cell .topline .kvlabel.start {
+    font-family: "Manjari", sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.02em;
   }
-  .cell .head .kv { display: none; }                /* KV date already lives in .num */
-  .cell .head:not(:has(.mtag)) { display: none; }   /* collapse when empty */
+  .cell .topline .kvlabel.muted {
+    font-family: "Manjari", sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .cell .topline .fest-r {
+    margin-left: auto;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 62%;
+    text-align: right;
+    font-family: "Manjari", sans-serif;
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--vermilion);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .cell .topline .fest-r:empty { display: none; }
 
-  .cell .aside { display: none; }                   /* moon re-emitted inside .pan below */
+  .cell .num {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+  .cell .num .date { font-size: 34px; line-height: 1; }
 
   .cell .pan {
     grid-column: 2;
     grid-row: 2;
     align-self: start;
-    padding-top: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 2px 0 0;
   }
   .cell .pan .nak {
     font-size: 17px;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
+    color: var(--ink-2);
+    line-height: 1.4;
   }
+  .cell .pan .nak .nz { color: var(--faint); font-size: 12.5px; }
   .cell .pan .nak .moon-slot {
     margin-left: auto;
     align-self: center;
     flex-shrink: 0;
     padding-left: 8px;
   }
-  .cell .pan .nak .moon-slot .moon { width: 18px; height: 18px; }
-  .cell .pan .nak   { font-size: 17px; }
-  .cell .pan .nak .nz { font-size: 12.5px; }
-  .cell .pan .tithi { font-size: 14px; }
-  .cell .pan .tithi .nz { font-size: 12px; }
-  .cell .pan .fest-line {
-    display: block;
-    font-family: "Manjari", sans-serif;
-    font-size: 12.5px;
-    color: var(--vermilion);
-    line-height: 1.3;
-    margin-top: 2px;
+  .cell .pan .nak {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
   }
+  .cell .pan .nak .moon-slot .moon { width: 17px; height: 17px; }
+  .cell .pan .tithi { font-size: 14px; color: var(--ink-faint); line-height: 1.4; }
+  .cell .pan .tithi .nz { font-size: 12px; }
 }
 
-/* mobile-only bits, hidden on desktop */
-.cell .pan .fest-line { display: none; }
-.cell .pan .nak .moon-slot { display: none; }
+/* the in-nak moon slot is mobile-only; on desktop the moon shows in .aside */
+@media (min-width: 641px) {
+  .cell .pan .nak .moon-slot { display: none; }
+}
 
 /* ============================================================ day detail */
 
