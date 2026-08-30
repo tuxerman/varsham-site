@@ -90,50 +90,36 @@
     ));
     wrap.appendChild(mast);
 
-    // month nav
+    // month nav — two rows:
+    //   row 1:  ‹   August 2026 · <ML>   ›
+    //   row 2:  [Today]   dd / mm / yyyy  [Go]
     const nav = el("div", "monthnav");
+
+    const r1 = el("div", "nav-row nav-months");
     const bPrev = el("button", "arrow arrow-prev", "‹"); bPrev.disabled = !nb.prev;
     bPrev.title = "Previous month";
     bPrev.addEventListener("click", () => { if (nb.prev) location.hash = `#/${nb.prev}`; });
     const bNext = el("button", "arrow arrow-next", "›"); bNext.disabled = !nb.next;
     bNext.title = "Next month";
     bNext.addEventListener("click", () => { if (nb.next) location.hash = `#/${nb.next}`; });
-
-    const mid = el("div", "middle");
-    mid.appendChild(el("div", "cur",
+    r1.append(bPrev, el("div", "cur",
       `<span class="disp">${doc.gregorian}</span>` +
       `<span class="dot">·</span>` +
       `<span class="ml">${esc(mlMonthText)}</span>`
-    ));
+    ), bNext);
 
-    const row2 = el("div", "row2");
-    // "Today" — only shown when today's date is inside the available range
+    const r2 = el("div", "nav-row nav-jump");
     if (INDEX.months.includes(todayISO().slice(0, 7))) {
       const bToday = el("button", "today-btn disp", "Today");
       bToday.addEventListener("click", () => {
         if (location.hash.toLowerCase() === "#/today") route();  // re-route even if same month
         else location.hash = "#/today";
       });
-      row2.appendChild(bToday);
+      r2.appendChild(bToday);
     }
-    // "go to date" — plain typed dd mm yyyy, no picker
-    const goForm = el("form", "goto");
-    goForm.innerHTML =
-      `<input type="text" inputmode="numeric" autocomplete="off" spellcheck="false" ` +
-      `placeholder="dd mm yyyy" aria-label="Go to date (dd mm yyyy)" maxlength="10">` +
-      `<button type="submit" class="disp">Go</button>`;
-    goForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const inp = goForm.querySelector("input");
-      const iso = parseTypedDate(inp.value);
-      if (!iso) { inp.classList.add("bad"); return; }
-      inp.classList.remove("bad");
-      inp.value = "";
-      location.hash = `#/${iso}`;
-    });
-    row2.appendChild(goForm);
+    r2.appendChild(buildGoto());
 
-    nav.append(bPrev, mid, bNext, row2);
+    nav.append(r1, r2);
     wrap.appendChild(nav);
 
     // weekday header (Monday-start; Sat + Sun flagged)
@@ -330,16 +316,66 @@
     return parseHash().month;
   }
 
-  // "3 8 2026" | "03/08/2026" | "3-8-26" -> "2026-08-03" (or null)
-  function parseTypedDate(raw) {
-    const p = (raw || "").trim().split(/[^\d]+/).filter(Boolean).map(Number);
-    if (p.length !== 3) return null;
-    let [d, m, y] = p;
+  // d, m, y numbers -> "YYYY-MM-DD", or null if not a real calendar date
+  function toISO(d, m, y) {
     if (y < 100) y += 2000;
     if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2999) return null;
     const dt = new Date(y, m - 1, d);
     if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
     return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+
+  // <form class="goto"> with dd / mm / yyyy fields.
+  // Auto-advance when a field fills, auto-retreat on backspace in an empty field.
+  function buildGoto() {
+    const f = el("form", "goto");
+    f.innerHTML =
+      `<input class="gd" type="text" inputmode="numeric" autocomplete="off" ` +
+        `maxlength="2" placeholder="dd" aria-label="Day">` +
+      `<span class="sep">/</span>` +
+      `<input class="gm" type="text" inputmode="numeric" autocomplete="off" ` +
+        `maxlength="2" placeholder="mm" aria-label="Month">` +
+      `<span class="sep">/</span>` +
+      `<input class="gy" type="text" inputmode="numeric" autocomplete="off" ` +
+        `maxlength="4" placeholder="yyyy" aria-label="Year">` +
+      `<button type="submit" class="disp">Go</button>`;
+    const fields = [...f.querySelectorAll("input")];
+
+    f.addEventListener("input", (e) => {
+      const inp = e.target;
+      inp.value = inp.value.replace(/\D/g, "");           // digits only
+      f.classList.remove("bad");
+      const i = fields.indexOf(inp);
+      if (inp.value.length >= inp.maxLength && i < fields.length - 1) {
+        fields[i + 1].focus();
+        fields[i + 1].select();
+      }
+    });
+    f.addEventListener("keydown", (e) => {
+      const inp = e.target;
+      const i = fields.indexOf(inp);
+      if (i < 0) return;
+      if (e.key === "Backspace" && inp.selectionStart === 0 && inp.selectionEnd === 0 && i > 0) {
+        e.preventDefault();
+        const prev = fields[i - 1];
+        prev.focus();
+        prev.setSelectionRange(prev.value.length, prev.value.length);
+      } else if (e.key === "ArrowLeft" && inp.selectionStart === 0 && i > 0) {
+        fields[i - 1].focus();
+      } else if (e.key === "ArrowRight" && inp.selectionStart === inp.value.length && i < fields.length - 1) {
+        fields[i + 1].focus();
+      }
+    });
+    f.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const [d, m, y] = fields.map((x) => Number(x.value));
+      const iso = fields.every((x) => x.value) ? toISO(d, m, y) : null;
+      if (!iso) { f.classList.add("bad"); fields[0].focus(); return; }
+      fields.forEach((x) => (x.value = ""));
+      fields[0].focus();
+      location.hash = `#/${iso}`;
+    });
+    return f;
   }
 
   function defaultMonth() {

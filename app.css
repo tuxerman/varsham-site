@@ -96,14 +96,22 @@ a:hover { color: #7d2c20; }
   margin-top: 2px;
 }
 
-/* month navigation — centred: [‹]   Month · ML   [Today] [go to date]   [›] */
+/* month navigation — two centred rows:
+     row 1:  ‹   August 2026 · <ML>   ›
+     row 2:  [Today]     dd / mm / yyyy  [Go]                                 */
 
 .monthnav {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.monthnav .nav-row {
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  margin-top: 16px;
+  gap: 16px;
 }
 
 .monthnav .arrow {
@@ -122,19 +130,6 @@ a:hover { color: #7d2c20; }
 }
 .monthnav .arrow:hover { background: #f0ece1; }
 .monthnav .arrow:disabled { opacity: 0.35; cursor: default; }
-
-.monthnav .middle {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.monthnav .row2 {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
 
 .monthnav .cur {
   display: inline-flex;
@@ -161,7 +156,7 @@ a:hover { color: #7d2c20; }
   cursor: pointer;
   border: 1px solid var(--vermilion);
   border-radius: 999px;
-  padding: 5px 15px;
+  padding: 6px 16px;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -171,33 +166,45 @@ a:hover { color: #7d2c20; }
 }
 .monthnav .today-btn:hover { background: #f4e9e4; }
 
+/* dd / mm / yyyy — pill with three fields, separators, and a Go button */
 .monthnav .goto {
   display: inline-flex;
   align-items: stretch;
-  gap: 0;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--card);
+  overflow: hidden;
 }
+.monthnav .goto.bad { border-color: var(--vermilion); background: #f7ece9; }
 .monthnav .goto input {
   appearance: none;
-  border: 1px solid var(--rule);
-  border-right: none;
-  border-radius: 999px 0 0 999px;
-  background: var(--card);
+  border: none;
+  background: transparent;
   color: var(--ink);
   font-family: "Fraunces", Georgia, serif;
   font-size: 12px;
-  letter-spacing: 0.06em;
-  padding: 6px 12px;
-  width: 108px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  padding: 6px 0;
 }
-.monthnav .goto input::placeholder { color: var(--faint); letter-spacing: 0.1em; }
-.monthnav .goto input:focus { outline: none; border-color: var(--ink-soft); }
-.monthnav .goto input.bad { border-color: var(--vermilion); background: #f7ece9; }
+.monthnav .goto .gd,
+.monthnav .goto .gm { width: 30px; }
+.monthnav .goto .gy { width: 44px; }
+.monthnav .goto input::placeholder { color: var(--faint); letter-spacing: 0.06em; }
+.monthnav .goto input:focus { outline: none; background: #f0ece1; }
+.monthnav .goto .sep {
+  display: flex;
+  align-items: center;
+  color: var(--faint);
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 12px;
+}
 .monthnav .goto button {
   appearance: none;
   cursor: pointer;
-  border: 1px solid var(--rule);
-  border-radius: 0 999px 999px 0;
-  background: var(--card);
+  border: none;
+  border-left: 1px solid var(--rule);
+  background: transparent;
   color: var(--ink-soft);
   font-size: 11px;
   letter-spacing: 0.12em;
@@ -371,17 +378,13 @@ a:hover { color: #7d2c20; }
   .masthead .ml-months { font-size: 12px; color: #b8ad97; text-align: center; }
   .masthead .ml-months .yr { display: none; }
 
-  /* mobile nav: a 3-column grid so nothing overflows —
-     row 1:  [‹]      Month · ML       [›]
-     row 2:  [Today]   [dd mm yyyy] [Go]   (spans all 3)  */
+  /* mobile nav: same two rows, on the dark bar.
+     row 1:  ‹   August 2026   ›   (ML dropped — the masthead shows it)
+     row 2:  [Today]   dd / mm / yyyy  [Go]                              */
   .monthnav {
     margin: 0;
-    padding: 10px 10px 12px;
-    display: grid;
-    grid-template-columns: 40px 1fr 40px;
-    align-items: center;
-    row-gap: 8px;
-    column-gap: 4px;
+    padding: 12px 12px 14px;
+    gap: 10px;
     background: var(--ink);
     color: #b8ad97;
   }
@@ -393,42 +396,24 @@ a:hover { color: #7d2c20; }
     width: 40px;
     height: 40px;
   }
-  .monthnav .arrow-prev { grid-column: 1; grid-row: 1; justify-self: start; }
-  .monthnav .arrow-next { grid-column: 3; grid-row: 1; justify-self: end; }
   .monthnav .arrow:hover { background: rgba(255,255,255,0.06); }
-  .monthnav .middle {
-    grid-column: 2;
-    grid-row: 1;
-    min-width: 0;
-  }
-  /* the Malayalam months already show in the masthead above; the nav just
-     needs the Gregorian month on a narrow screen */
-  .monthnav .cur {
-    justify-content: center;
-    color: #8a7d64;
-    max-width: 100%;
-  }
+  .monthnav .cur { color: #8a7d64; }
   .monthnav .cur .disp { color: #b8ad97; font-size: 12px; }
   .monthnav .cur .dot,
   .monthnav .cur .ml { display: none; }
-  .monthnav .row2 {
-    grid-row: 2;
-    grid-column: 1 / -1;
-    justify-content: center;
-    gap: 10px;
-  }
   .monthnav .today-btn { color: #d98c5f; border-color: #7a4a37; }
   .monthnav .today-btn:hover { background: rgba(255,255,255,0.06); }
-  .monthnav .goto input {
+  .monthnav .goto {
     background: rgba(255,255,255,0.05);
     border-color: #4a4235;
-    color: #f4efe2;
-    width: 96px;
   }
+  .monthnav .goto.bad { border-color: var(--vermilion); background: rgba(156,59,46,0.18); }
+  .monthnav .goto input { color: #f4efe2; }
   .monthnav .goto input::placeholder { color: #8a7d64; }
+  .monthnav .goto input:focus { background: rgba(255,255,255,0.1); }
+  .monthnav .goto .sep { color: #8a7d64; }
   .monthnav .goto button {
-    background: rgba(255,255,255,0.05);
-    border-color: #4a4235;
+    border-left-color: #4a4235;
     color: #b8ad97;
   }
   .monthnav .goto button:hover { background: rgba(255,255,255,0.1); }
