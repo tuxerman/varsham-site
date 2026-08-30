@@ -79,15 +79,23 @@
     app.removeAttribute("aria-busy");
     const wrap = el("div", "wrap");
 
-    // masthead
+    // masthead — on mobile this is the dark header band with ‹ ›
     const mast = el("div", "masthead");
+    const mhPrev = el("button", "mh-prev", "‹"); mhPrev.disabled = !nb.prev;
+    mhPrev.title = "Previous month";
+    mhPrev.addEventListener("click", () => { if (nb.prev) location.hash = `#/${nb.prev}`; });
+    const mhNext = el("button", "mh-next", "›"); mhNext.disabled = !nb.next;
+    mhNext.title = "Next month";
+    mhNext.addEventListener("click", () => { if (nb.next) location.hash = `#/${nb.next}`; });
+    mast.appendChild(mhPrev);
     mast.appendChild(el("div", "stack-left",
       `<div class="era">Kollavarsham ${years}</div>` +
       `<h1 class="disp">${doc.gregorian.replace(/ (\d{4})$/, ' <em>$1</em>')}</h1>`
     ));
     mast.appendChild(el("div", "ml-months ml",
-      `<div>${mlMonthText}</div><div class="yr disp">${years}</div>`
+      `<span class="names">${mlMonthText}</span><span class="yr">${years}</span>`
     ));
+    mast.appendChild(mhNext);
     wrap.appendChild(mast);
 
     // month nav — two rows:
@@ -158,14 +166,18 @@
     const fest = festText(d);
     const festHtml = fest ? `<span class="fest ml">${esc(fest)}</span>` : "";
 
-    // Kollavarsham label for the top strip:
-    //  - month-start day  -> "മകരം 1"  (bold)
-    //  - grid's first day -> "ധനു 17"  (muted — month already in progress)
-    //  - every other day  -> just the KV day number
-    let kvLabel, kvCls;
-    if (d.monthStart)   { kvLabel = `${esc(d.kvMonth.ml)} 1`;        kvCls = "kvlabel start"; }
-    else if (isFirst)   { kvLabel = `${esc(d.kvMonth.ml)} ${d.kv}`;  kvCls = "kvlabel muted"; }
-    else                { kvLabel = String(d.kv);                    kvCls = "kvlabel"; }
+    // On a KV month-start day the KV date rides up to a strip in the content
+    // column ("കുംഭം 1"), aligned with the nakshatram; the date column then
+    // shows only the weekday + big Gregorian number. Every other day keeps the
+    // KV day number under the big date in the date column.
+    //  (grid's first day: also show the in-progress month, muted, no border.)
+    let monthStrip = "";
+    if (d.monthStart) {
+      monthStrip = `<div class="mstrip ml">${esc(d.kvMonth.ml)} 1</div>`;
+    } else if (isFirst) {
+      monthStrip = `<div class="mstrip muted ml">${esc(d.kvMonth.ml)} ${d.kv}</div>`;
+    }
+    const kvUnderDate = (d.monthStart || isFirst) ? "" : `<span class="kv-b">${d.kv}</span>`;
 
     // month tag kept for the DESKTOP grid (top-right of the cell)
     let tag = "";
@@ -174,20 +186,16 @@
     const kvHtml = d.monthStart ? "" : `<span class="kv">${d.kv}</span>`;
 
     // One structure, reflowed per breakpoint by CSS.
-    //  desktop -> .head above, .num left / .aside right, .pan pinned bottom
-    //  phone   -> row1: weekday + KV label ... festival (right)
-    //             row2: big date
-    //             row3: nakshatram / tithi
     cell.innerHTML =
       `<div class="head">${kvHtml}${tag}</div>` +
-      `<div class="topline">` +
+      `<div class="num">` +
         `<span class="wd">${d.wd}</span>` +
-        `<span class="${kvCls}">${kvLabel}</span>` +
-        `<span class="fest-r ml">${fest ? esc(fest) : ""}</span>` +
+        `<span class="date disp">${d.g}</span>` +
+        kvUnderDate +
       `</div>` +
-      `<div class="num"><span class="date disp">${d.g}</span></div>` +
       `<div class="aside">${moon}${festHtml}</div>` +
       `<div class="pan">` +
+        monthStrip +
         `<div class="nak ml">${esc(d.nak.ml)} <span class="nz">${d.nak.endNazhika}</span>` +
           (moon ? `<span class="moon-slot">${moon}</span>` : "") +
         `</div>` +
