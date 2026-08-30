@@ -1,0 +1,603 @@
+/* Malayalam Calendar — Editorial grid (desktop) + day list (mobile)
+   Palette: warm off-white, near-black ink, one refined vermilion.
+   Fraunces = display numerals/Latin; Manjari = Malayalam (old lipi); Spectral = Latin body. */
+
+:root {
+  --paper:      #f6f3ec;
+  --card:       #faf8f2;
+  --card-sun:   #f1ecdf;
+  --card-empty: #efeade;
+  --rule:       #ddd6c6;
+  --rule-soft:  #ece7db;
+  --ink:        #262019;
+  --ink-2:      #2c261e;
+  --ink-soft:   #6b6154;
+  --ink-faint:  #837a68;
+  --muted:      #9a9080;
+  --faint:      #a89d89;
+  --vermilion:  #9c3b2e;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Spectral", Georgia, serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+.ml   { font-family: "Manjari", "Spectral", sans-serif; }
+.disp { font-family: "Fraunces", Georgia, serif; }
+
+a { color: var(--vermilion); }
+a:hover { color: #7d2c20; }
+
+.loading {
+  padding: 80px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-family: "Fraunces", Georgia, serif;
+  letter-spacing: 0.1em;
+}
+
+/* ------------------------------------------------------------------ shell */
+
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 40px 32px 48px;
+}
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 18px;
+}
+
+.masthead .era {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 15px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--vermilion);
+}
+
+.masthead h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 52px;
+  font-weight: 500;
+  line-height: 1;
+  margin: 4px 0 0;
+}
+
+.masthead h1 em {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.masthead .ml-months {
+  text-align: right;
+  font-size: 24px;
+  line-height: 1.5;
+  color: #423b30;
+}
+
+.masthead .ml-months .yr {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* month navigation */
+
+.monthnav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.monthnav button {
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--ink);
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 16px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 1;
+}
+.monthnav button:hover { background: #f0ece1; }
+.monthnav button:disabled { opacity: 0.35; cursor: default; }
+
+.monthnav .cur {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------- weekday header */
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-top: 22px;
+}
+
+.weekdays span {
+  font-family: "Fraunces", Georgia, serif;
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #4a4235;
+  padding-bottom: 10px;
+}
+.weekdays span.wknd { color: var(--vermilion); }
+
+/* ----------------------------------------------------------- month grid */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+}
+
+/* Desktop cell: 2-col mini-grid.
+   Row 1 = .head (kv date + month tag), spanning both columns.
+   Row 2 = .num (big date) left, .aside (moon + festival) right.
+   Row 3 = .pan (nakshatram / tithi) spanning both, pushed to the bottom. */
+.cell {
+  background: var(--card);
+  min-height: 148px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto 1fr;
+  column-gap: 10px;
+}
+.cell.empty  { background: var(--card-empty); }
+.cell.sun,
+.cell.sat    { background: var(--card-sun); }
+.cell.month-start { box-shadow: inset 3px 0 0 0 var(--vermilion); }
+.cell.clickable { cursor: pointer; }
+.cell.clickable:hover { background: #fffdf7; }
+
+.cell .head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 18px;
+}
+.cell .kv {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 14px;
+  color: var(--vermilion);
+  letter-spacing: 0.03em;
+}
+.cell .mtag {
+  font-family: "Manjari", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--vermilion);
+}
+.cell .mtag.muted { color: var(--muted); }
+
+.cell .num {
+  grid-column: 1;
+  grid-row: 2;
+  margin-top: 3px;
+}
+.cell .num .wd,
+.cell .num .kv-b { display: none; }          /* only shown in mobile list mode */
+.cell .num .date {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 40px;
+  line-height: 0.95;
+  font-weight: 500;
+  color: var(--ink);
+}
+.cell.sun .num .date,
+.cell.sat .num .date { color: var(--vermilion); }
+
+.cell .aside {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+  padding-top: 6px;
+}
+.cell .fest {
+  font-family: "Manjari", sans-serif;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--vermilion);
+}
+
+.cell .pan {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  align-self: end;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 8px;
+}
+.cell .nak {
+  font-family: "Manjari", sans-serif;
+  font-size: 16px;
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+.cell .nak .nz { color: var(--faint); font-size: 11.5px; }
+.cell .tithi {
+  font-family: "Manjari", sans-serif;
+  font-size: 14px;
+  color: var(--ink-faint);
+  line-height: 1.4;
+}
+.cell .tithi .nz { color: #b0a68f; font-size: 11px; }
+
+/* moon glyphs (inline svg from JS) */
+.moon { width: 16px; height: 16px; display: block; }
+
+/* footer key */
+.legend {
+  display: flex;
+  gap: 30px;
+  margin-top: 20px;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 12px;
+  color: #8a8072;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.legend .item { display: flex; align-items: center; gap: 7px; }
+.legend .push { margin-left: auto; letter-spacing: 0.06em; }
+
+/* ============================================================ mobile list */
+
+@media (max-width: 640px) {
+  .wrap { padding: 0; max-width: none; }
+
+  .masthead {
+    background: var(--ink);
+    color: #f4efe2;
+    border-bottom: none;
+    padding: 16px 20px 14px;
+    align-items: center;
+  }
+  .masthead .stack-left { display: none; }        /* era + big h1 hidden on phone */
+  .masthead h1 { font-size: 21px; color: #f4efe2; margin: 0; }
+  .masthead .ml-months { font-size: 12px; color: #b8ad97; text-align: center; }
+  .masthead .ml-months .yr { display: none; }
+
+  .monthnav {
+    margin: 0;
+    padding: 0;
+    justify-content: space-between;
+    background: var(--ink);
+    color: #b8ad97;
+  }
+  .monthnav .middle { text-align: center; }
+  .monthnav .cur { color: #8a7d64; }
+  .monthnav button {
+    border: none;
+    background: transparent;
+    color: #b8ad97;
+    font-size: 20px;
+    width: 44px;
+    height: 44px;
+  }
+  .monthnav button:hover { background: rgba(255,255,255,0.06); }
+
+  .weekdays, .legend { display: none; }
+
+  .grid {
+    display: block;
+    gap: 0;
+    background: var(--card);
+    border: none;
+  }
+
+  /* Phone list row: a CSS grid — .num is the left column (spans both body rows),
+     .head + .aside share the top-right row, .pan fills the bottom-right row. */
+  .cell {
+    min-height: 0;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--rule-soft);
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    row-gap: 2px;
+  }
+  .cell.empty { display: none; }                    /* no lead-in cells in list mode */
+  .cell.month-start { box-shadow: inset 0 3px 0 0 var(--vermilion); }  /* TOP border on phone */
+
+  .cell .num {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+  }
+  .cell .num .wd {
+    display: block;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .cell.sun .num .wd,
+  .cell.sat .num .wd { color: #c56b5c; }
+  .cell .num .date { font-size: 34px; margin-top: 1px; }
+  .cell .num .kv-b {
+    display: block;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 11px;
+    color: var(--vermilion);
+    margin-top: 3px;
+  }
+
+  /* mobile: nakshatram line gets the moon at its right end; month tag / festival
+     drop to their own lines so nothing is clipped */
+  .cell .head {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-height: 0;
+  }
+  .cell .head .kv { display: none; }                /* KV date already lives in .num */
+  .cell .head:not(:has(.mtag)) { display: none; }   /* collapse when empty */
+
+  .cell .aside { display: none; }                   /* moon re-emitted inside .pan below */
+
+  .cell .pan {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    padding-top: 2px;
+  }
+  .cell .pan .nak {
+    font-size: 17px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .cell .pan .nak .moon-slot {
+    margin-left: auto;
+    align-self: center;
+    flex-shrink: 0;
+    padding-left: 8px;
+  }
+  .cell .pan .nak .moon-slot .moon { width: 18px; height: 18px; }
+  .cell .pan .nak   { font-size: 17px; }
+  .cell .pan .nak .nz { font-size: 12.5px; }
+  .cell .pan .tithi { font-size: 14px; }
+  .cell .pan .tithi .nz { font-size: 12px; }
+  .cell .pan .fest-line {
+    display: block;
+    font-family: "Manjari", sans-serif;
+    font-size: 12.5px;
+    color: var(--vermilion);
+    line-height: 1.3;
+    margin-top: 2px;
+  }
+}
+
+/* mobile-only bits, hidden on desktop */
+.cell .pan .fest-line { display: none; }
+.cell .pan .nak .moon-slot { display: none; }
+
+/* ============================================================ day detail */
+
+#day-detail {
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 0;
+  width: 540px;
+  max-width: calc(100vw - 32px);
+  background: var(--card);
+  color: var(--ink);
+}
+#day-detail::backdrop { background: rgba(38, 32, 25, 0.45); }
+
+.dd-head {
+  background: var(--ink);
+  color: #f4efe2;
+  padding: 26px 40px 22px;
+}
+.dd-head .wd {
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #d98c5f;
+}
+.dd-head .wd .ml { letter-spacing: 0; font-size: 14px; }
+.dd-head .big {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 6px;
+}
+.dd-head .big .date {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 76px;
+  line-height: 0.82;
+  font-weight: 600;
+}
+.dd-head .big .mo {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 18px;
+  font-style: italic;
+  color: #b8ad97;
+}
+
+.dd-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #b8ad97;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.dd-body { padding: 8px 40px 34px; }
+
+.dd-feature {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 0;
+  border-bottom: 1px solid #e8e1d0;
+}
+.dd-feature:last-of-type { border-bottom: 2px solid var(--ink); }
+.dd-feature .icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dd-feature .lab {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.dd-feature .lab .ml {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.dd-feature .name {
+  font-family: "Manjari", sans-serif;
+  font-size: 28px;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-top: 3px;
+}
+.dd-feature .grow { flex-grow: 1; }
+.dd-feature .end {
+  text-align: right;
+  flex-shrink: 0;
+}
+.dd-feature .end .n {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 24px;
+  color: var(--ink);
+  line-height: 1;
+}
+.dd-feature .end .u {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-top: 3px;
+}
+
+.dd-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 18px;
+  padding: 13px 0;
+  border-bottom: 1px solid #e8e1d0;
+}
+.dd-row:last-child { border-bottom: none; }
+.dd-row .k {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.dd-row .v { text-align: right; }
+.dd-row .v .ml { font-size: 18px; color: var(--ink); }
+.dd-row .v .tl {
+  font-family: "Spectral", Georgia, serif;
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+}
+.dd-row .v.disp {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 16px;
+  color: #423b30;
+}
+
+.dd-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+.dd-foot .line { flex-grow: 1; height: 1px; background: var(--rule); }
+.dd-foot .orn {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 13px;
+  color: #c3b8a0;
+}
+
+@media (max-width: 640px) {
+  #day-detail {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    overflow-y: auto;
+    border: none;
+  }
+  .dd-head { padding: 22px 24px 20px; }
+  .dd-head .big .date { font-size: 64px; }
+  .dd-body { padding: 8px 24px 30px; }
+
+  /* feature blocks: let the name wrap and drop the end-time under it */
+  .dd-feature { flex-wrap: wrap; gap: 12px; padding: 18px 0; }
+  .dd-feature .grow { flex: 1 1 140px; min-width: 0; }
+  .dd-feature .name { font-size: 24px; overflow-wrap: anywhere; }
+  .dd-feature .end { flex: 1 1 100%; text-align: left; padding-left: 68px; }
+  .dd-feature .end .n { font-size: 20px; }
+
+  /* rows: stack label over value so nothing is pushed off-screen */
+  .dd-row { flex-direction: column; align-items: flex-start; gap: 3px; padding: 11px 0; }
+  .dd-row .v, .dd-row .v.disp { text-align: left; }
+}

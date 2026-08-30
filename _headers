@@ -1,0 +1,15 @@
+# Cloudflare Pages headers.
+# The month JSON is fetched with a ?v=<build id> string, so it can cache hard;
+# a new deploy changes the id and busts it. index.json must stay fresh so the
+# app sees a new build id.
+
+/data/index.json
+  Cache-Control: public, max-age=60, must-revalidate
+
+/data/*.json
+  Cache-Control: public, max-age=86400
+
+/app.js
+  Cache-Control: public, max-age=3600
+/app.css
+  Cache-Control: public, max-age=3600
