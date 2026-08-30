@@ -98,6 +98,17 @@
     bNext.addEventListener("click", () => { if (nb.next) location.hash = `#/${nb.next}`; });
     const mid = el("div", "middle");
     mid.appendChild(el("div", "cur disp", `${doc.gregorian} · ${mlMonthText}`));
+    // "Today" — only shown when today's date is inside the available range
+    const todayInRange = INDEX.months.includes(todayISO().slice(0, 7));
+    if (todayInRange) {
+      const bToday = el("button", "today-btn disp", "Today");
+      bToday.addEventListener("click", () => {
+        // force a re-route even if today is in the current month
+        if (location.hash.toLowerCase() === "#/today") route();
+        else location.hash = "#/today";
+      });
+      mid.appendChild(bToday);
+    }
     nav.append(bPrev, mid, bNext);
     wrap.appendChild(nav);
 
@@ -129,8 +140,9 @@
 
   function dayCell(d, isFirst, doc) {
     const wknd = d.wd === "Sun" ? "sun" : (d.wd === "Sat" ? "sat" : "");
-    const cell = el("div", `cell clickable ${wknd}${d.monthStart ? " month-start" : ""}`);
-    cell.addEventListener("click", () => openDetail(d, doc));
+    const cell = el("div", `cell clickable ${wknd}${d.monthStart ? " month-start" : ""}${d.date === todayISO() ? " today" : ""}`);
+    // navigate to the day so the URL is shareable; route() opens the detail
+    cell.addEventListener("click", () => { location.hash = `#/${d.date}`; });
 
     const moon = d.moon ? MOON[d.moon] : "";
     const fest = festText(d);
@@ -234,18 +246,28 @@
           `<span class="orn">&#10086;</span><div class="line"></div></div>` +
       `</div>`;
 
-    dlg.querySelector(".dd-close").addEventListener("click", () => dlg.close());
+    dlg.querySelector(".dd-close").addEventListener("click", closeDetail);
     if (typeof dlg.showModal === "function") dlg.showModal();
     else dlg.setAttribute("open", "");
+  }
+
+  // Closing the day view returns the URL to the month (so a shared #/today link
+  // still lands on the day, but the browser Back button and the × both step out).
+  function closeDetail() {
+    if (current && parseHash().day) {
+      history.replaceState(null, "", `#/${current}`);
+    }
+    dlg.close();
   }
 
   dlg.addEventListener("click", (e) => {
     // click on the backdrop (outside the dialog's own box) closes it
     const r = dlg.getBoundingClientRect();
     if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
-      dlg.close();
+      closeDetail();
     }
   });
+  dlg.addEventListener("cancel", (e) => { e.preventDefault(); closeDetail(); });
 
   function moonText(d) {
     if (d.moon === "full") return "Pournami · full moon";
@@ -261,39 +283,68 @@
 
   // ------------------------------------------------------------- routing
 
+  const todayISO = () => {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}` +
+           `-${String(n.getDate()).padStart(2, "0")}`;
+  };
+
+  // Parse the hash into { month, day? }.
+  //   #/2026-01        -> a month
+  //   #/2026-01-15     -> a month + a day to open
+  //   #/today          -> today's date, resolved now
+  function parseHash() {
+    let h = (location.hash || "").replace(/^#\/?/, "").trim().toLowerCase();
+    if (h === "today") h = todayISO();
+    let m = /^(\d{4}-\d{2})-(\d{2})$/.exec(h);
+    if (m) return { month: m[1], day: `${m[1]}-${m[2]}` };
+    if (/^\d{4}-\d{2}$/.test(h)) return { month: h, day: null };
+    return { month: null, day: null };
+  }
+
   function hashMonth() {
-    const m = (location.hash || "").replace(/^#\/?/, "");
-    return /^\d{4}-\d{2}$/.test(m) ? m : null;
+    return parseHash().month;
   }
 
   function defaultMonth() {
-    const now = new Date();
-    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const key = todayISO().slice(0, 7);
     return INDEX.months.includes(key) ? key : INDEX.months[0];
   }
 
   async function route() {
-    const want = hashMonth() || defaultMonth();
-    if (want === current && app.querySelector(".grid")) return;
+    const { month, day } = parseHash();
+    const want = month || defaultMonth();
     if (!INDEX.months.includes(want)) {
-      app.innerHTML = `<div class="loading">No data for ${want}.</div>`;
+      app.innerHTML = `<div class="loading">No data for ${esc(want)}.</div>`;
       return;
     }
+
+    const monthChanged = want !== current || !app.querySelector(".grid");
     current = want;
-    if (dlg.open) dlg.close();
+
     try {
       const doc = await loadMonth(want);
-      render(doc);
-      // prefetch neighbours
-      const nb = neighbours(want);
-      [nb.prev, nb.next].forEach((m) => { if (m && !cache.has(m)) loadMonth(m).catch(() => {}); });
+      if (monthChanged) {
+        if (dlg.open) dlg.close();
+        render(doc);
+        const nb = neighbours(want);
+        [nb.prev, nb.next].forEach((m) => { if (m && !cache.has(m)) loadMonth(m).catch(() => {}); });
+      }
+      // open a specific day if the hash named one
+      if (day) {
+        const rec = (doc.malayalam.days || []).find((d) => d.date === day);
+        if (rec) openDetail(rec, doc);
+        else if (dlg.open) dlg.close();
+      } else if (dlg.open) {
+        dlg.close();
+      }
     } catch (err) {
-      app.innerHTML = `<div class="loading">Could not load ${want}.<br>${esc(err.message)}</div>`;
+      app.innerHTML = `<div class="loading">Could not load ${esc(want)}.<br>${esc(err.message)}</div>`;
     }
   }
 
   window.addEventListener("hashchange", route);
-  window.addEventListener("keydown", (e) => { if (e.key === "Escape" && dlg.open) dlg.close(); });
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape" && dlg.open) closeDetail(); });
 
   // ------------------------------------------------------------- boot
 
