@@ -31,8 +31,21 @@ html, body {
 .ml   { font-family: "Manjari", "Spectral", sans-serif; }
 .disp { font-family: "Fraunces", Georgia, serif; }
 
-a { color: var(--vermilion); }
+a { color: var(--vermilion); transition: color 0.3s ease; }
 a:hover { color: #7d2c20; }
+
+/* quick, calm hover feedback */
+.cell.clickable,
+.monthnav .arrow,
+.monthnav .today-btn,
+.monthnav .goto button,
+.masthead .mh-prev,
+.masthead .mh-next {
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
 
 .loading {
   padding: 80px 20px;
@@ -264,7 +277,9 @@ a:hover { color: #7d2c20; }
 .cell.sat    { background: var(--card-sun); }
 .cell.month-start { box-shadow: inset 3px 0 0 0 var(--vermilion); }
 .cell.clickable { cursor: pointer; }
-.cell.clickable:hover { background: #fffdf7; }
+.cell.clickable:hover { background: #ffffff; box-shadow: inset 0 0 0 1px var(--rule); }
+.cell.clickable.month-start:hover { box-shadow: inset 0 0 0 1px var(--rule), inset 3px 0 0 0 var(--vermilion); }
+.cell.clickable.today:hover { background: #fdf6ea; box-shadow: inset 0 0 0 2px var(--vermilion); }
 .cell.today { background: #f3ece0; box-shadow: inset 0 0 0 2px var(--vermilion); }
 .cell.today.month-start { box-shadow: inset 0 0 0 2px var(--vermilion), inset 3px 0 0 0 var(--vermilion); }
 
