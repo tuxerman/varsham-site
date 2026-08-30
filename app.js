@@ -92,24 +92,48 @@
 
     // month nav
     const nav = el("div", "monthnav");
-    const bPrev = el("button", null, "‹"); bPrev.disabled = !nb.prev;
+    const bPrev = el("button", "arrow arrow-prev", "‹"); bPrev.disabled = !nb.prev;
+    bPrev.title = "Previous month";
     bPrev.addEventListener("click", () => { if (nb.prev) location.hash = `#/${nb.prev}`; });
-    const bNext = el("button", null, "›"); bNext.disabled = !nb.next;
+    const bNext = el("button", "arrow arrow-next", "›"); bNext.disabled = !nb.next;
+    bNext.title = "Next month";
     bNext.addEventListener("click", () => { if (nb.next) location.hash = `#/${nb.next}`; });
+
     const mid = el("div", "middle");
-    mid.appendChild(el("div", "cur disp", `${doc.gregorian} · ${mlMonthText}`));
+    mid.appendChild(el("div", "cur",
+      `<span class="disp">${doc.gregorian}</span>` +
+      `<span class="dot">·</span>` +
+      `<span class="ml">${esc(mlMonthText)}</span>`
+    ));
+
+    const row2 = el("div", "row2");
     // "Today" — only shown when today's date is inside the available range
-    const todayInRange = INDEX.months.includes(todayISO().slice(0, 7));
-    if (todayInRange) {
+    if (INDEX.months.includes(todayISO().slice(0, 7))) {
       const bToday = el("button", "today-btn disp", "Today");
       bToday.addEventListener("click", () => {
-        // force a re-route even if today is in the current month
-        if (location.hash.toLowerCase() === "#/today") route();
+        if (location.hash.toLowerCase() === "#/today") route();  // re-route even if same month
         else location.hash = "#/today";
       });
-      mid.appendChild(bToday);
+      row2.appendChild(bToday);
     }
-    nav.append(bPrev, mid, bNext);
+    // "go to date" — plain typed dd mm yyyy, no picker
+    const goForm = el("form", "goto");
+    goForm.innerHTML =
+      `<input type="text" inputmode="numeric" autocomplete="off" spellcheck="false" ` +
+      `placeholder="dd mm yyyy" aria-label="Go to date (dd mm yyyy)" maxlength="10">` +
+      `<button type="submit" class="disp">Go</button>`;
+    goForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const inp = goForm.querySelector("input");
+      const iso = parseTypedDate(inp.value);
+      if (!iso) { inp.classList.add("bad"); return; }
+      inp.classList.remove("bad");
+      inp.value = "";
+      location.hash = `#/${iso}`;
+    });
+    row2.appendChild(goForm);
+
+    nav.append(bPrev, mid, bNext, row2);
     wrap.appendChild(nav);
 
     // weekday header (Monday-start; Sat + Sun flagged)
@@ -306,6 +330,18 @@
     return parseHash().month;
   }
 
+  // "3 8 2026" | "03/08/2026" | "3-8-26" -> "2026-08-03" (or null)
+  function parseTypedDate(raw) {
+    const p = (raw || "").trim().split(/[^\d]+/).filter(Boolean).map(Number);
+    if (p.length !== 3) return null;
+    let [d, m, y] = p;
+    if (y < 100) y += 2000;
+    if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2999) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+
   function defaultMonth() {
     const key = todayISO().slice(0, 7);
     return INDEX.months.includes(key) ? key : INDEX.months[0];
@@ -315,7 +351,10 @@
     const { month, day } = parseHash();
     const want = month || defaultMonth();
     if (!INDEX.months.includes(want)) {
-      app.innerHTML = `<div class="loading">No data for ${esc(want)}.</div>`;
+      const lo = INDEX.months[0], hi = INDEX.months[INDEX.months.length - 1];
+      app.innerHTML =
+        `<div class="loading">No calendar data for ${esc(day || want)}.<br>` +
+        `Available: ${esc(lo)} to ${esc(hi)}.</div>`;
       return;
     }
 

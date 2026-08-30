@@ -96,16 +96,17 @@ a:hover { color: #7d2c20; }
   margin-top: 2px;
 }
 
-/* month navigation */
+/* month navigation — centred: [‹]   Month · ML   [Today] [go to date]   [›] */
 
 .monthnav {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-top: 14px;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 16px;
 }
 
-.monthnav button {
+.monthnav .arrow {
   appearance: none;
   border: 1px solid var(--rule);
   background: var(--card);
@@ -117,36 +118,93 @@ a:hover { color: #7d2c20; }
   border-radius: 50%;
   cursor: pointer;
   line-height: 1;
+  flex-shrink: 0;
 }
-.monthnav button:hover { background: #f0ece1; }
-.monthnav button:disabled { opacity: 0.35; cursor: default; }
+.monthnav .arrow:hover { background: #f0ece1; }
+.monthnav .arrow:disabled { opacity: 0.35; cursor: default; }
 
 .monthnav .middle {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
-.monthnav .cur {
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
+.monthnav .row2 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
+.monthnav .cur {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.monthnav .cur .disp {
+  font-family: "Fraunces", Georgia, serif;
+  text-transform: uppercase;
+}
+.monthnav .cur .ml {
+  font-family: "Manjari", "Spectral", sans-serif;
+  font-size: 15px;
+  letter-spacing: 0;
+  color: #6b6154;
+}
+.monthnav .cur .dot { color: var(--faint); }
+
 .monthnav .today-btn {
-  width: auto;
-  height: auto;
+  appearance: none;
+  cursor: pointer;
+  border: 1px solid var(--vermilion);
   border-radius: 999px;
-  padding: 5px 14px;
+  padding: 5px 15px;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--vermilion);
-  border-color: var(--vermilion);
   background: transparent;
+  line-height: 1;
 }
 .monthnav .today-btn:hover { background: #f4e9e4; }
+
+.monthnav .goto {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+}
+.monthnav .goto input {
+  appearance: none;
+  border: 1px solid var(--rule);
+  border-right: none;
+  border-radius: 999px 0 0 999px;
+  background: var(--card);
+  color: var(--ink);
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  padding: 6px 12px;
+  width: 108px;
+}
+.monthnav .goto input::placeholder { color: var(--faint); letter-spacing: 0.1em; }
+.monthnav .goto input:focus { outline: none; border-color: var(--ink-soft); }
+.monthnav .goto input.bad { border-color: var(--vermilion); background: #f7ece9; }
+.monthnav .goto button {
+  appearance: none;
+  cursor: pointer;
+  border: 1px solid var(--rule);
+  border-radius: 0 999px 999px 0;
+  background: var(--card);
+  color: var(--ink-soft);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 13px;
+}
+.monthnav .goto button:hover { background: #f0ece1; }
 
 /* ------------------------------------------------------- weekday header */
 
@@ -313,24 +371,67 @@ a:hover { color: #7d2c20; }
   .masthead .ml-months { font-size: 12px; color: #b8ad97; text-align: center; }
   .masthead .ml-months .yr { display: none; }
 
+  /* mobile nav: a 3-column grid so nothing overflows —
+     row 1:  [‹]      Month · ML       [›]
+     row 2:  [Today]   [dd mm yyyy] [Go]   (spans all 3)  */
   .monthnav {
     margin: 0;
-    padding: 0;
-    justify-content: space-between;
+    padding: 10px 10px 12px;
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    row-gap: 8px;
+    column-gap: 4px;
     background: var(--ink);
     color: #b8ad97;
   }
-  .monthnav .middle { text-align: center; }
-  .monthnav .cur { color: #8a7d64; }
-  .monthnav button {
+  .monthnav .arrow {
     border: none;
     background: transparent;
     color: #b8ad97;
     font-size: 20px;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
   }
-  .monthnav button:hover { background: rgba(255,255,255,0.06); }
+  .monthnav .arrow-prev { grid-column: 1; grid-row: 1; justify-self: start; }
+  .monthnav .arrow-next { grid-column: 3; grid-row: 1; justify-self: end; }
+  .monthnav .arrow:hover { background: rgba(255,255,255,0.06); }
+  .monthnav .middle {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+  /* the Malayalam months already show in the masthead above; the nav just
+     needs the Gregorian month on a narrow screen */
+  .monthnav .cur {
+    justify-content: center;
+    color: #8a7d64;
+    max-width: 100%;
+  }
+  .monthnav .cur .disp { color: #b8ad97; font-size: 12px; }
+  .monthnav .cur .dot,
+  .monthnav .cur .ml { display: none; }
+  .monthnav .row2 {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-content: center;
+    gap: 10px;
+  }
+  .monthnav .today-btn { color: #d98c5f; border-color: #7a4a37; }
+  .monthnav .today-btn:hover { background: rgba(255,255,255,0.06); }
+  .monthnav .goto input {
+    background: rgba(255,255,255,0.05);
+    border-color: #4a4235;
+    color: #f4efe2;
+    width: 96px;
+  }
+  .monthnav .goto input::placeholder { color: #8a7d64; }
+  .monthnav .goto button {
+    background: rgba(255,255,255,0.05);
+    border-color: #4a4235;
+    color: #b8ad97;
+  }
+  .monthnav .goto button:hover { background: rgba(255,255,255,0.1); }
 
   .weekdays, .legend { display: none; }
 
