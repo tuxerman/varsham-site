@@ -165,6 +165,9 @@
     const moon = d.moon ? MOON[d.moon] : "";
     const fest = festText(d);
     const festHtml = fest ? `<span class="fest ml">${esc(fest)}</span>` : "";
+    // Same text, second slot: the desktop cell shows it in .aside (top-right);
+    // the phone list has no .aside, so it rides at the top of .pan in vermilion.
+    const panFestHtml = fest ? `<div class="pan-fest ml">${esc(fest)}</div>` : "";
 
     // On a KV month-start day the KV date rides up to a strip in the content
     // column ("കുംഭം 1"), aligned with the nakshatram; the date column then
@@ -196,6 +199,7 @@
       `<div class="aside">${moon}${festHtml}</div>` +
       `<div class="pan">` +
         monthStrip +
+        panFestHtml +
         `<div class="nak ml">${esc(d.nak.ml)} <span class="nz">${d.nak.endNazhika}</span>` +
           (moon ? `<span class="moon-slot">${moon}</span>` : "") +
         `</div>` +
@@ -233,7 +237,9 @@
             `<path d="M20 2 L23.6 14.5 L36.5 14.5 L26 22.3 L29.8 34.8 L20 27 L10.2 34.8 L14 22.3 L3.5 14.5 L16.4 14.5 Z" fill="#262019"/>` +
           `</svg></div>` +
           `<div class="grow"><div class="lab">Nakshatram</div>` +
-            `<div class="name">${esc(d.nak.ml)}</div></div>` +
+            `<div class="name">${esc(d.nak.ml)}` +
+              (d.nak.en ? ` <span class="en">${esc(d.nak.en)}</span>` : "") +
+            `</div></div>` +
           `<div class="end"><div class="n">${fmtNazhika(d.nak.endNazhika)}</div>` +
             `<div class="u">nazhika · vinazhika</div></div>` +
         `</div>` +
@@ -245,7 +251,9 @@
           `</svg></div>` +
           `<div class="grow"><div class="lab">Tithi ` +
             `<span class="ml">· ${paksha}</span></div>` +
-            `<div class="name">${esc(d.tithi.ml)}</div></div>` +
+            `<div class="name">${esc(d.tithi.ml)}` +
+              (d.tithi.en ? ` <span class="en">${esc(d.tithi.en)}</span>` : "") +
+            `</div></div>` +
           `<div class="end"><div class="n">${fmtNazhika(d.tithi.endNazhika)}</div>` +
             `<div class="u">nazhika · vinazhika</div></div>` +
         `</div>` +
@@ -258,11 +266,7 @@
           `${doc.malayalam.kollavarshamYears.join("–")} · ${d.kv}</span></div>` +
         `<div class="dd-row"><span class="k">Tithi number</span>` +
           `<span class="v disp">${d.tithi.num} <span style="color:var(--faint)">/ 30</span></span></div>` +
-        `<div class="dd-row"><span class="k">Nakshatram (English)</span>` +
-          `<span class="v disp">${d.nak.en}</span></div>` +
         nak2 +
-        `<div class="dd-row"><span class="k">Tithi (English)</span>` +
-          `<span class="v disp">${d.tithi.en}</span></div>` +
         `<div class="dd-row"><span class="k">Moon phase</span>` +
           `<span class="v" style="display:flex;align-items:center;gap:8px">` +
           `${HALF_MOON}<span class="disp" style="font-size:14px;color:#423b30">${moonText(d)}</span></span></div>` +
@@ -270,9 +274,6 @@
           `<span class="v ml" style="color:var(--vermilion);font-size:16px">${fest ? esc(fest) : "—"}</span></div>` +
         `<div class="dd-row"><span class="k">Bank / public holiday</span>` +
           `<span class="v disp" style="color:var(--muted);font-size:14px">${holiday}</span></div>` +
-
-        `<div class="dd-foot"><div class="line"></div>` +
-          `<span class="orn">&#10086;</span><div class="line"></div></div>` +
       `</div>`;
 
     dlg.querySelector(".dd-close").addEventListener("click", closeDetail);
