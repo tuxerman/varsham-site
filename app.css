@@ -1,6 +1,6 @@
 /* Malayalam Calendar — Editorial grid (desktop) + day list (mobile)
    Palette: warm off-white, near-black ink, one refined vermilion.
-   Fraunces = display numerals/Latin; Manjari = Malayalam (old lipi); Spectral = Latin body. */
+   Besley = the single serif for all Latin; Manjari = Malayalam (old lipi). */
 
 :root {
   --paper:      #f6f3ec;
@@ -24,12 +24,12 @@ html, body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: "Spectral", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   -webkit-text-size-adjust: 100%;
 }
 
-.ml   { font-family: "Manjari", "Spectral", sans-serif; }
-.disp { font-family: "Fraunces", Georgia, serif; }
+.ml   { font-family: "Manjari", "Besley", serif; }
+.disp { font-family: "Besley", Georgia, serif; }
 
 a { color: var(--vermilion); transition: color 0.3s ease; }
 a:hover { color: #7d2c20; }
@@ -51,7 +51,7 @@ a:hover { color: #7d2c20; }
   padding: 80px 20px;
   text-align: center;
   color: var(--muted);
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   letter-spacing: 0.1em;
 }
 
@@ -75,7 +75,7 @@ a:hover { color: #7d2c20; }
 .masthead .mh-next { display: none; }        /* desktop uses the .monthnav arrows */
 
 .masthead .era {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 15px;
   letter-spacing: 0.32em;
   text-transform: uppercase;
@@ -83,7 +83,7 @@ a:hover { color: #7d2c20; }
 }
 
 .masthead h1 {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 52px;
   font-weight: 500;
   line-height: 1;
@@ -98,7 +98,7 @@ a:hover { color: #7d2c20; }
 
 .masthead .ml-months {
   text-align: right;
-  font-family: "Manjari", "Spectral", sans-serif;
+  font-family: "Manjari", "Besley", serif;
   font-size: 24px;
   line-height: 1.5;
   color: #423b30;
@@ -106,7 +106,7 @@ a:hover { color: #7d2c20; }
 .masthead .ml-months .names { display: block; }
 .masthead .ml-months .yr {
   display: block;
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 13px;
   letter-spacing: 0.14em;
   color: var(--muted);
@@ -136,7 +136,7 @@ a:hover { color: #7d2c20; }
   border: 1px solid var(--rule);
   background: var(--card);
   color: var(--ink);
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 16px;
   width: 38px;
   height: 38px;
@@ -157,11 +157,11 @@ a:hover { color: #7d2c20; }
   color: var(--muted);
 }
 .monthnav .cur .disp {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   text-transform: uppercase;
 }
 .monthnav .cur .ml {
-  font-family: "Manjari", "Spectral", sans-serif;
+  font-family: "Manjari", "Besley", serif;
   font-size: 15px;
   letter-spacing: 0;
   color: #6b6154;
@@ -198,7 +198,7 @@ a:hover { color: #7d2c20; }
   border: none;
   background: transparent;
   color: var(--ink);
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 12px;
   letter-spacing: 0.08em;
   text-align: center;
@@ -213,7 +213,7 @@ a:hover { color: #7d2c20; }
   display: flex;
   align-items: center;
   color: var(--faint);
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 12px;
 }
 .monthnav .goto button {
@@ -239,7 +239,7 @@ a:hover { color: #7d2c20; }
 }
 
 .weekdays span {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   text-align: center;
   font-size: 13px;
   letter-spacing: 0.22em;
@@ -291,13 +291,13 @@ a:hover { color: #7d2c20; }
   min-height: 18px;
 }
 .cell .kv {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 14px;
   color: var(--vermilion);
   letter-spacing: 0.03em;
 }
 .cell .mtag {
-  font-family: "Manjari", sans-serif;
+  font-family: "Manjari", "Besley", serif;
   font-size: 16px;
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -313,7 +313,7 @@ a:hover { color: #7d2c20; }
 .cell .num .wd,
 .cell .num .kv-b { display: none; }            /* mobile list mode only */
 .cell .num .date {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 40px;
   line-height: 0.95;
   font-weight: 500;
@@ -335,7 +335,7 @@ a:hover { color: #7d2c20; }
   padding-top: 6px;
 }
 .cell .fest {
-  font-family: "Manjari", sans-serif;
+  font-family: "Manjari", "Besley", serif;
   font-size: 12px;
   line-height: 1.3;
   color: var(--vermilion);
@@ -351,14 +351,14 @@ a:hover { color: #7d2c20; }
   padding-top: 8px;
 }
 .cell .nak {
-  font-family: "Manjari", sans-serif;
+  font-family: "Manjari", "Besley", serif;
   font-size: 16px;
   color: var(--ink-2);
   line-height: 1.4;
 }
 .cell .nak .nz { color: var(--faint); font-size: 11.5px; }
 .cell .tithi {
-  font-family: "Manjari", sans-serif;
+  font-family: "Manjari", "Besley", serif;
   font-size: 14px;
   color: var(--ink-faint);
   line-height: 1.4;
@@ -373,7 +373,7 @@ a:hover { color: #7d2c20; }
   display: flex;
   gap: 30px;
   margin-top: 20px;
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 12px;
   color: #8a8072;
   align-items: center;
@@ -407,7 +407,7 @@ a:hover { color: #7d2c20; }
     border: none;
     background: transparent;
     color: #b8ad97;
-    font-family: "Fraunces", Georgia, serif;
+    font-family: "Besley", Georgia, serif;
     font-size: 22px;
     line-height: 1;
     width: 34px;
@@ -425,7 +425,7 @@ a:hover { color: #7d2c20; }
   }
   .masthead .stack-left .era { display: none; }
   .masthead h1 {
-    font-family: "Fraunces", Georgia, serif;
+    font-family: "Besley", Georgia, serif;
     font-size: 27px;
     font-weight: 500;
     color: #f4efe2;
@@ -438,7 +438,7 @@ a:hover { color: #7d2c20; }
     grid-row: 2;
     text-align: center;
     white-space: nowrap;
-    font-family: "Manjari", "Spectral", sans-serif;
+    font-family: "Manjari", "Besley", serif;
     font-size: 13px;
     color: #b8ad97;
     margin-top: 3px;
@@ -446,7 +446,7 @@ a:hover { color: #7d2c20; }
   .masthead .ml-months .names { display: inline; }
   .masthead .ml-months .yr {
     display: inline;
-    font-family: "Fraunces", Georgia, serif;
+    font-family: "Besley", Georgia, serif;
     font-size: 12px;
     letter-spacing: 0.08em;
     color: #8a7d64;
@@ -508,7 +508,7 @@ a:hover { color: #7d2c20; }
   }
   .cell .num .wd {
     display: block;
-    font-family: "Fraunces", Georgia, serif;
+    font-family: "Besley", Georgia, serif;
     font-size: 11px;
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -523,7 +523,7 @@ a:hover { color: #7d2c20; }
   }
   .cell .num .kv-b {
     display: block;
-    font-family: "Fraunces", Georgia, serif;
+    font-family: "Besley", Georgia, serif;
     font-size: 13px;
     color: var(--vermilion);
     margin-top: 4px;
@@ -542,7 +542,7 @@ a:hover { color: #7d2c20; }
      on the line where the nakshatram begins */
   .cell .pan .mstrip {
     display: block;
-    font-family: "Manjari", "Spectral", sans-serif;
+    font-family: "Manjari", "Besley", serif;
     font-size: 15px;
     color: var(--vermilion);
     line-height: 1.3;
@@ -553,7 +553,7 @@ a:hover { color: #7d2c20; }
     display: flex;
     align-items: baseline;
     gap: 8px;
-    font-family: "Manjari", "Spectral", sans-serif;
+    font-family: "Manjari", "Besley", serif;
     font-size: 22px;
     color: var(--ink-2);
     line-height: 1.35;
@@ -567,7 +567,7 @@ a:hover { color: #7d2c20; }
   }
   .cell .pan .nak .moon-slot .moon { width: 18px; height: 18px; }
   .cell .pan .tithi {
-    font-family: "Manjari", "Spectral", sans-serif;
+    font-family: "Manjari", "Besley", serif;
     font-size: 16px;
     color: var(--ink-faint);
     line-height: 1.35;
@@ -612,13 +612,13 @@ a:hover { color: #7d2c20; }
   margin-top: 6px;
 }
 .dd-head .big .date {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 76px;
   line-height: 0.82;
   font-weight: 600;
 }
 .dd-head .big .mo {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 18px;
   font-style: italic;
   color: #b8ad97;
@@ -658,7 +658,7 @@ a:hover { color: #7d2c20; }
   flex-shrink: 0;
 }
 .dd-feature .lab {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -671,7 +671,7 @@ a:hover { color: #7d2c20; }
   color: var(--muted);
 }
 .dd-feature .name {
-  font-family: "Manjari", sans-serif;
+  font-family: "Manjari", "Besley", serif;
   font-size: 28px;
   color: var(--ink);
   line-height: 1.2;
@@ -683,13 +683,13 @@ a:hover { color: #7d2c20; }
   flex-shrink: 0;
 }
 .dd-feature .end .n {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 24px;
   color: var(--ink);
   line-height: 1;
 }
 .dd-feature .end .u {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -707,7 +707,7 @@ a:hover { color: #7d2c20; }
 }
 .dd-row:last-child { border-bottom: none; }
 .dd-row .k {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -716,13 +716,13 @@ a:hover { color: #7d2c20; }
 .dd-row .v { text-align: right; }
 .dd-row .v .ml { font-size: 18px; color: var(--ink); }
 .dd-row .v .tl {
-  font-family: "Spectral", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 13px;
   color: var(--muted);
   font-style: italic;
 }
 .dd-row .v.disp {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 16px;
   color: #423b30;
 }
@@ -735,7 +735,7 @@ a:hover { color: #7d2c20; }
 }
 .dd-foot .line { flex-grow: 1; height: 1px; background: var(--rule); }
 .dd-foot .orn {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Besley", Georgia, serif;
   font-size: 13px;
   color: #c3b8a0;
 }
