@@ -89,7 +89,6 @@
     mhNext.addEventListener("click", () => { if (nb.next) location.hash = `#/${nb.next}`; });
     mast.appendChild(mhPrev);
     mast.appendChild(el("div", "stack-left",
-      `<div class="era">Kollavarsham ${years}</div>` +
       `<h1 class="disp">${doc.gregorian.replace(/ (\d{4})$/, ' <em>$1</em>')}</h1>`
     ));
     mast.appendChild(el("div", "ml-months ml",
@@ -274,9 +273,13 @@
           `<span class="v ml" style="color:var(--vermilion);font-size:16px">${fest ? esc(fest) : "—"}</span></div>` +
         `<div class="dd-row"><span class="k">Bank / public holiday</span>` +
           `<span class="v disp" style="color:var(--muted);font-size:14px">${holiday}</span></div>` +
+        `<div class="dd-back">` +
+          `<button class="today-btn disp" type="button">&#8249;&nbsp; Back to calendar</button>` +
+        `</div>` +
       `</div>`;
 
     dlg.querySelector(".dd-close").addEventListener("click", closeDetail);
+    dlg.querySelector(".dd-back .today-btn").addEventListener("click", closeDetail);
     if (typeof dlg.showModal === "function") dlg.showModal();
     else dlg.setAttribute("open", "");
   }
