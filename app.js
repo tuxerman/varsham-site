@@ -74,6 +74,7 @@
     const spanned = ml.monthsSpanned;
     const mlMonthText = spanned.map((m) => m.ml).join(" – ");
     const years = ml.kollavarshamYears.join("–");
+    const lunarText = (ml.lunarMonthsSpanned || []).join(" – ");
 
     app.innerHTML = "";
     app.removeAttribute("aria-busy");
@@ -92,7 +93,9 @@
       `<h1 class="disp">${doc.gregorian.replace(/ (\d{4})$/, ' <em>$1</em>')}</h1>`
     ));
     mast.appendChild(el("div", "ml-months ml",
-      `<span class="names">${mlMonthText}</span><span class="yr">${years}</span>`
+      `<span class="names">${mlMonthText}</span>` +
+      (lunarText ? `<span class="lunar">${esc(lunarText)}</span>` : "") +
+      `<span class="yr">${years}</span>`
     ));
     mast.appendChild(mhNext);
     wrap.appendChild(mast);
@@ -168,8 +171,8 @@
     // the phone list has no .aside, so it rides at the top of .pan in vermilion.
     const panFestHtml = fest ? `<div class="pan-fest ml">${esc(fest)}</div>` : "";
     // Sanskrit amanta lunar-month name, only on the day the month begins.
-    const lunarHtml = d.lunarMonth
-      ? `<span class="lunar-month">${esc(d.lunarMonth)}</span>` : "";
+    const lunarHtml = d.lunarMonthStart
+      ? `<span class="lunar-month">${esc(d.lunarMonthStart)}</span>` : "";
 
     // On a KV month-start day the KV date rides up to a strip in the content
     // column ("കുംഭം 1"), aligned with the nakshatram; the date column then
@@ -201,7 +204,7 @@
       `<div class="aside">${lunarHtml}${moon}${festHtml}</div>` +
       `<div class="pan">` +
         monthStrip +
-        (d.lunarMonth ? `<div class="pan-lunar">${esc(d.lunarMonth)}</div>` : "") +
+        (d.lunarMonthStart ? `<div class="pan-lunar">${esc(d.lunarMonthStart)}</div>` : "") +
         panFestHtml +
         `<div class="nak ml">${esc(d.nak.ml)} <span class="nz">${d.nak.endNazhika}</span>` +
           (moon ? `<span class="moon-slot">${moon}</span>` : "") +
@@ -264,6 +267,10 @@
         `<div class="dd-row"><span class="k">Malayalam month</span>` +
           `<span class="v"><span class="ml">${esc(d.kvMonth.ml)}</span> ` +
           `<span class="tl">${d.kvMonth.en}</span></span></div>` +
+        (d.lunarMonth
+          ? `<div class="dd-row"><span class="k">Lunar month</span>` +
+            `<span class="v disp">${esc(d.lunarMonth)}</span></div>`
+          : "") +
         `<div class="dd-row"><span class="k">Kollavarsham date</span>` +
           `<span class="v" style="color:var(--vermilion);font-family:Fraunces,Georgia,serif;font-size:17px">` +
           `${doc.malayalam.kollavarshamYears.join("–")} · ${d.kv}</span></div>` +

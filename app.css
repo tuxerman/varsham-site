@@ -219,6 +219,13 @@ a:hover { color: #7d2c20; }
   color: #423b30;
 }
 .masthead .ml-months .names { display: block; }
+.masthead .ml-months .lunar {
+  display: block;
+  font-family: "Manjari", "Besley", serif;
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 1px;
+}
 .masthead .ml-months .yr {
   display: block;
   font-family: "Besley", Georgia, serif;
@@ -592,6 +599,13 @@ a:hover { color: #7d2c20; }
     margin-top: 3px;
   }
   .masthead .ml-months .names { display: inline; }
+  .masthead .ml-months .lunar {
+    display: block;
+    font-family: "Manjari", "Besley", serif;
+    font-size: 12px;
+    color: #8a7d64;
+    margin-top: 1px;
+  }
   .masthead .ml-months .yr {
     display: inline;
     font-family: "Besley", Georgia, serif;
