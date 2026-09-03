@@ -167,6 +167,9 @@
     // Same text, second slot: the desktop cell shows it in .aside (top-right);
     // the phone list has no .aside, so it rides at the top of .pan in vermilion.
     const panFestHtml = fest ? `<div class="pan-fest ml">${esc(fest)}</div>` : "";
+    // Sanskrit amanta lunar-month name, only on the day the month begins.
+    const lunarHtml = d.lunarMonth
+      ? `<span class="lunar-month">${esc(d.lunarMonth)}</span>` : "";
 
     // On a KV month-start day the KV date rides up to a strip in the content
     // column ("കുംഭം 1"), aligned with the nakshatram; the date column then
@@ -195,9 +198,10 @@
         `<span class="date disp">${d.g}</span>` +
         kvUnderDate +
       `</div>` +
-      `<div class="aside">${moon}${festHtml}</div>` +
+      `<div class="aside">${lunarHtml}${moon}${festHtml}</div>` +
       `<div class="pan">` +
         monthStrip +
+        (d.lunarMonth ? `<div class="pan-lunar">${esc(d.lunarMonth)}</div>` : "") +
         panFestHtml +
         `<div class="nak ml">${esc(d.nak.ml)} <span class="nz">${d.nak.endNazhika}</span>` +
           (moon ? `<span class="moon-slot">${moon}</span>` : "") +
