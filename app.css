@@ -235,9 +235,11 @@ a:hover { color: #7d2c20; }
   margin-top: 2px;
 }
 
-/* month navigation — two centred rows:
-     row 1:  ‹   August 2026 · <ML>   ›
-     row 2:  [Today]     dd / mm / yyyy  [Go]                                 */
+/* month navigation — one centred "jump to" row:
+     ‹   [Today]   [ September 2026 · <ML> ▾ ]   ›
+   Today and the month/year picker trigger are equal-weight pills, so the
+   row reads as one cluster of jump controls rather than a stray link plus
+   a form. A future free-text search joins this row as another pill.      */
 
 .monthnav {
   display: flex;
@@ -250,15 +252,19 @@ a:hover { color: #7d2c20; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .monthnav .arrow {
   appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--rule);
   background: var(--card);
   color: var(--ink);
   font-family: "Besley", Georgia, serif;
+  font-weight: 600;
   font-size: 19px;
   width: 46px;
   height: 46px;
@@ -270,35 +276,19 @@ a:hover { color: #7d2c20; }
 .monthnav .arrow:hover { background: #f0ece1; }
 .monthnav .arrow:disabled { opacity: 0.35; cursor: default; }
 
-.monthnav .cur {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
-  font-size: 16px;
-  letter-spacing: 0.12em;
-  color: var(--muted);
-}
-.monthnav .cur .disp {
-  font-family: "Besley", Georgia, serif;
-  text-transform: uppercase;
-}
-.monthnav .cur .ml {
-  font-family: "Manjari", "Besley", serif;
-  font-size: 19px;
-  letter-spacing: 0;
-  color: #6b6154;
-}
-.monthnav .cur .dot { color: var(--faint); }
-
 .monthnav .today-btn,
 .dd-back .today-btn {
   appearance: none;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
   border: 1px solid var(--vermilion);
   border-radius: 999px;
   padding: 9px 20px;
+  font-family: "Besley", Georgia, serif;
+  font-weight: 600;
   font-size: 13px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--vermilion);
   background: transparent;
@@ -307,52 +297,101 @@ a:hover { color: #7d2c20; }
 .monthnav .today-btn:hover,
 .dd-back .today-btn:hover { background: #f4e9e4; }
 
-/* dd / mm / yyyy — pill with three fields, separators, and a Go button */
-.monthnav .goto {
+/* month/year picker: a pill trigger (same height family as Today) that
+   opens a popover with a year switcher over a 3x4 month grid.            */
+.monthnav .picker { position: relative; }
+
+.monthnav .picker-trigger {
+  appearance: none;
+  cursor: pointer;
   display: inline-flex;
-  align-items: stretch;
+  align-items: center;
+  gap: 10px;
   border: 1px solid var(--rule);
   border-radius: 999px;
   background: var(--card);
-  overflow: hidden;
+  padding: 9px 18px;
+  line-height: 1;
 }
-.monthnav .goto.bad { border-color: var(--vermilion); background: #f7ece9; }
-.monthnav .goto input {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--ink);
+.monthnav .picker-trigger:hover { background: #f0ece1; }
+.monthnav .picker-trigger .pt-main {
   font-family: "Besley", Georgia, serif;
-  font-size: 14px;
-  letter-spacing: 0.08em;
-  text-align: center;
-  padding: 9px 0;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
 }
-.monthnav .goto .gd,
-.monthnav .goto .gm { width: 36px; }
-.monthnav .goto .gy { width: 52px; }
-.monthnav .goto input::placeholder { color: var(--faint); letter-spacing: 0.06em; }
-.monthnav .goto input:focus { outline: none; background: #f0ece1; }
-.monthnav .goto .sep {
+.monthnav .picker-trigger .pt-dot { color: var(--faint); }
+.monthnav .picker-trigger .pt-ml {
+  font-family: "Manjari", "Besley", serif;
+  font-size: 16px;
+  color: #6b6154;
+}
+.monthnav .picker-trigger .pt-caret { color: var(--faint); flex-shrink: 0; }
+.monthnav .picker-trigger[aria-expanded="true"] { background: #f0ece1; border-color: var(--faint); }
+
+.monthnav .picker-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(38, 32, 25, 0.14);
+  padding: 14px;
+  z-index: 5;
+}
+.monthnav .picker-head {
   display: flex;
   align-items: center;
-  color: var(--faint);
-  font-family: "Besley", Georgia, serif;
-  font-size: 14px;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
-.monthnav .goto button {
+.monthnav .picker-yr {
+  font-family: "Besley", Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.monthnav .picker-yr-nav {
   appearance: none;
   cursor: pointer;
   border: none;
-  border-left: 1px solid var(--rule);
+  background: none;
+  color: var(--ink-soft);
+  font-family: "Besley", Georgia, serif;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.monthnav .picker-yr-nav:hover { color: var(--ink); }
+.monthnav .picker-yr-nav:disabled { opacity: 0.3; cursor: default; }
+
+.monthnav .picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.monthnav .picker-mo {
+  appearance: none;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
   background: transparent;
   color: var(--ink-soft);
+  font-family: "Besley", Georgia, serif;
   font-size: 13px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 9px 16px;
+  padding: 9px 0;
+  text-align: center;
 }
-.monthnav .goto button:hover { background: #f0ece1; }
+.monthnav .picker-mo:hover:not(:disabled) { background: #f0ece1; color: var(--ink); }
+.monthnav .picker-mo:disabled { color: var(--rule); cursor: default; }
+.monthnav .picker-mo.current { background: var(--vermilion); color: #fff; }
+.monthnav .picker-mo.current:hover { background: var(--vermilion); }
 
 /* ------------------------------------------------------- weekday header */
 
@@ -624,7 +663,7 @@ a:hover { color: #7d2c20; }
     gap: 12px;
     background: transparent;
   }
-  .monthnav .nav-months { display: none; }        /* month title lives in the masthead */
+  .monthnav .arrow { display: none; }              /* the dark band's ‹ › cover paging */
   .monthnav .nav-row.nav-jump { gap: 12px; flex-wrap: wrap; }
   .monthnav .today-btn { color: var(--vermilion); border-color: var(--vermilion); }
   .monthnav .today-btn:hover { background: rgba(255,255,255,0.06); }

@@ -100,36 +100,37 @@
     mast.appendChild(mhNext);
     wrap.appendChild(mast);
 
-    // month nav — two rows:
-    //   row 1:  ‹   August 2026 · <ML>   ›
-    //   row 2:  [Today]   dd / mm / yyyy  [Go]
+    // month nav — one row, all controls equal weight:
+    //   ‹   [Today]   [ September 2026 · <ML> ▾ ]   ›
+    // The middle button opens a month/year picker (buildMonthPicker) instead
+    // of the old dd/mm/yyyy triplet. Today sits beside it, same pill style,
+    // so the row reads as one "jump to" cluster rather than a stray link.
+    // A future free-text search slots in here too, as another equal pill.
     const nav = el("div", "monthnav");
+    const r1 = el("div", "nav-row nav-jump");
 
-    const r1 = el("div", "nav-row nav-months");
     const bPrev = el("button", "arrow arrow-prev", "‹"); bPrev.disabled = !nb.prev;
     bPrev.title = "Previous month";
     bPrev.addEventListener("click", () => { if (nb.prev) location.hash = `#/${nb.prev}`; });
     const bNext = el("button", "arrow arrow-next", "›"); bNext.disabled = !nb.next;
     bNext.title = "Next month";
     bNext.addEventListener("click", () => { if (nb.next) location.hash = `#/${nb.next}`; });
-    r1.append(bPrev, el("div", "cur",
-      `<span class="disp">${doc.gregorian}</span>` +
-      `<span class="dot">·</span>` +
-      `<span class="ml">${esc(mlMonthText)}</span>`
-    ), bNext);
 
-    const r2 = el("div", "nav-row nav-jump");
+    r1.appendChild(bPrev);
+
     if (INDEX.months.includes(todayISO().slice(0, 7))) {
       const bToday = el("button", "today-btn disp", "Today");
       bToday.addEventListener("click", () => {
         if (location.hash.toLowerCase() === "#/today") route();  // re-route even if same month
         else location.hash = "#/today";
       });
-      r2.appendChild(bToday);
+      r1.appendChild(bToday);
     }
-    r2.appendChild(buildGoto());
 
-    nav.append(r1, r2);
+    r1.appendChild(buildMonthPicker(doc.month, doc.gregorian, mlMonthText));
+    r1.appendChild(bNext);
+
+    nav.appendChild(r1);
     wrap.appendChild(nav);
 
     // weekday header (Monday-start; Sat + Sun flagged)
@@ -350,66 +351,78 @@
     return parseHash().month;
   }
 
-  // d, m, y numbers -> "YYYY-MM-DD", or null if not a real calendar date
-  function toISO(d, m, y) {
-    if (y < 100) y += 2000;
-    if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2999) return null;
-    const dt = new Date(y, m - 1, d);
-    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
-    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  }
+  const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  // <form class="goto"> with dd / mm / yyyy fields.
-  // Auto-advance when a field fills, auto-retreat on backspace in an empty field.
-  function buildGoto() {
-    const f = el("form", "goto");
-    f.innerHTML =
-      `<input class="gd" type="text" inputmode="numeric" autocomplete="off" ` +
-        `maxlength="2" placeholder="dd" aria-label="Day">` +
-      `<span class="sep">/</span>` +
-      `<input class="gm" type="text" inputmode="numeric" autocomplete="off" ` +
-        `maxlength="2" placeholder="mm" aria-label="Month">` +
-      `<span class="sep">/</span>` +
-      `<input class="gy" type="text" inputmode="numeric" autocomplete="off" ` +
-        `maxlength="4" placeholder="yyyy" aria-label="Year">` +
-      `<button type="submit" class="disp">Go</button>`;
-    const fields = [...f.querySelectorAll("input")];
+  // Trigger button + popover that replaces the old dd/mm/yyyy typing form.
+  // Trigger shows the current month (Gregorian + Malayalam, same info the
+  // masthead already states); the popover is a year switcher over a 3x4
+  // month grid, clamped to the months INDEX actually has data for.
+  function buildMonthPicker(monthKey, gregorianText, mlText) {
+    const wrap = el("div", "picker");
+    const trigger = el("button", "picker-trigger disp", "");
+    trigger.type = "button";
+    trigger.setAttribute("aria-haspopup", "true");
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.innerHTML =
+      `<span class="pt-main">${esc(gregorianText)}</span>` +
+      `<span class="pt-dot">•</span>` +
+      `<span class="pt-ml ml">${esc(mlText)}</span>` +
+      `<svg class="pt-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>`;
+    wrap.appendChild(trigger);
 
-    f.addEventListener("input", (e) => {
-      const inp = e.target;
-      inp.value = inp.value.replace(/\D/g, "");           // digits only
-      f.classList.remove("bad");
-      const i = fields.indexOf(inp);
-      if (inp.value.length >= inp.maxLength && i < fields.length - 1) {
-        fields[i + 1].focus();
-        fields[i + 1].select();
+    let panel = null;
+    let panelYear = Number(monthKey.slice(0, 4));
+
+    const closePanel = () => {
+      if (!panel) return;
+      panel.remove();
+      panel = null;
+      trigger.setAttribute("aria-expanded", "false");
+      document.removeEventListener("mousedown", onOutside, true);
+      document.removeEventListener("keydown", onKey, true);
+    };
+    const onOutside = (e) => { if (!wrap.contains(e.target)) closePanel(); };
+    const onKey = (e) => { if (e.key === "Escape") { closePanel(); trigger.focus(); } };
+
+    const renderPanel = () => {
+      const yearMonths = INDEX.months.filter((m) => m.startsWith(String(panelYear)));
+      const hasPrevYear = INDEX.months.some((m) => Number(m.slice(0, 4)) < panelYear);
+      const hasNextYear = INDEX.months.some((m) => Number(m.slice(0, 4)) > panelYear);
+
+      panel.innerHTML = "";
+      const head = el("div", "picker-head");
+      const yPrev = el("button", "picker-yr-nav", "‹"); yPrev.type = "button"; yPrev.disabled = !hasPrevYear;
+      const yNext = el("button", "picker-yr-nav", "›"); yNext.type = "button"; yNext.disabled = !hasNextYear;
+      yPrev.addEventListener("click", () => { panelYear -= 1; renderPanel(); });
+      yNext.addEventListener("click", () => { panelYear += 1; renderPanel(); });
+      head.append(yPrev, el("span", "picker-yr disp", String(panelYear)), yNext);
+      panel.appendChild(head);
+
+      const grid = el("div", "picker-grid");
+      for (let mo = 1; mo <= 12; mo++) {
+        const key = `${panelYear}-${String(mo).padStart(2, "0")}`;
+        const has = yearMonths.includes(key);
+        const btn = el("button", `picker-mo disp${key === monthKey ? " current" : ""}`, MONTH_ABBR[mo - 1]);
+        btn.type = "button";
+        if (!has) { btn.disabled = true; }
+        else btn.addEventListener("click", () => { closePanel(); location.hash = `#/${key}`; });
+        grid.appendChild(btn);
       }
+      panel.appendChild(grid);
+    };
+
+    trigger.addEventListener("click", () => {
+      if (panel) { closePanel(); return; }
+      panelYear = Number(monthKey.slice(0, 4));
+      panel = el("div", "picker-panel");
+      wrap.appendChild(panel);
+      renderPanel();
+      trigger.setAttribute("aria-expanded", "true");
+      document.addEventListener("mousedown", onOutside, true);
+      document.addEventListener("keydown", onKey, true);
     });
-    f.addEventListener("keydown", (e) => {
-      const inp = e.target;
-      const i = fields.indexOf(inp);
-      if (i < 0) return;
-      if (e.key === "Backspace" && inp.selectionStart === 0 && inp.selectionEnd === 0 && i > 0) {
-        e.preventDefault();
-        const prev = fields[i - 1];
-        prev.focus();
-        prev.setSelectionRange(prev.value.length, prev.value.length);
-      } else if (e.key === "ArrowLeft" && inp.selectionStart === 0 && i > 0) {
-        fields[i - 1].focus();
-      } else if (e.key === "ArrowRight" && inp.selectionStart === inp.value.length && i < fields.length - 1) {
-        fields[i + 1].focus();
-      }
-    });
-    f.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const [d, m, y] = fields.map((x) => Number(x.value));
-      const iso = fields.every((x) => x.value) ? toISO(d, m, y) : null;
-      if (!iso) { f.classList.add("bad"); fields[0].focus(); return; }
-      fields.forEach((x) => (x.value = ""));
-      fields[0].focus();
-      location.hash = `#/${iso}`;
-    });
-    return f;
+
+    return wrap;
   }
 
   function defaultMonth() {
