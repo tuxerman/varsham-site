@@ -473,12 +473,18 @@
   }
 
   // On phones the day list is long; after rendering the current month with no
-  // specific day requested, glide it so today's row sits just under the pinned
-  // header band. Desktop grid has no scroll to speak of, so it's a no-op there.
-  function scrollTodayIntoView() {
+  // Phone-only list positioning after a month renders:
+  //   - current month, no day open -> glide today's row under the pinned band
+  //   - any other month            -> return to the top (Today / month picker)
+  // Desktop grid barely scrolls, so this is a no-op there.
+  function positionMonthList(want, hasDay) {
     if (!window.matchMedia("(max-width: 640px)").matches) return;
+    if (want !== todayISO().slice(0, 7) || hasDay) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     const cell = app.querySelector(".cell.today");
-    if (!cell) return;
+    if (!cell) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     const header = document.querySelector(".site-header");
     const band = document.querySelector(".masthead");
     const pinned =
@@ -518,10 +524,10 @@
       } else if (dlg.open) {
         dlg.close();
       }
-      // first load, landed on the current month, no day open: on phones,
-      // glide the list to today so it starts near the top of the viewport.
-      if (isBoot && !day && want === todayISO().slice(0, 7)) {
-        requestAnimationFrame(scrollTodayIntoView);
+      // on phones, re-position the freshly rendered month list (scroll to
+      // today for the current month, back to the top for any other).
+      if ((isBoot || monthChanged) && !day) {
+        requestAnimationFrame(() => positionMonthList(want, false));
       }
     } catch (err) {
       app.innerHTML = `<div class="loading">Could not load ${esc(want)}.<br>${esc(err.message)}</div>`;
