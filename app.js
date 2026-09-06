@@ -150,8 +150,8 @@
     // legend
     const leg = el("div", "legend disp");
     leg.innerHTML =
-      `<span class="item">${MOON.full} Pournami</span>` +
-      `<span class="item">${MOON.new} Amavasi</span>` +
+      `<span class="item">${MOON.full} Purnima</span>` +
+      `<span class="item">${MOON.new} Amavasya</span>` +
       `<span>Kollavarsham date &amp; festivals in vermilion</span>` +
       `<span class="push">Tithi &amp; nakshatram end in nazhika–vinazhika from sunrise</span>`;
     wrap.appendChild(leg);
@@ -249,12 +249,15 @@
             `</div></div>` +
           `<div class="end"><div class="n">${fmtNazhika(d.nak.endNazhika)}</div>` +
             `<div class="u">nazhika · vinazhika</div></div>` +
+          `<div class="hm">${nazhikaToHM(d.nak.endNazhika)}</div>` +
         `</div>` +
 
         `<div class="dd-feature">` +
-          `<div class="icon"><svg viewBox="0 0 40 40" width="32" height="32">` +
-            `<circle cx="20" cy="20" r="15.5" fill="none" stroke="#262019" stroke-width="1.2"/>` +
-            `<path d="M20 6 a14 14 0 0 1 0 28 a9 14 0 0 0 0 -28" fill="#262019"/>` +
+          `<div class="icon"><svg viewBox="0 0 40 40" width="30" height="30">` +
+            `<circle cx="20" cy="20" r="14" fill="none" stroke="#262019" stroke-width="1.5"/>` +
+            `<circle cx="15" cy="16" r="2.2" fill="#262019"/>` +
+            `<circle cx="24" cy="22" r="3" fill="#262019"/>` +
+            `<circle cx="18" cy="26" r="1.6" fill="#262019"/>` +
           `</svg></div>` +
           `<div class="grow"><div class="lab">Tithi ` +
             `<span class="ml">· ${paksha}</span></div>` +
@@ -263,6 +266,7 @@
             `</div></div>` +
           `<div class="end"><div class="n">${fmtNazhika(d.tithi.endNazhika)}</div>` +
             `<div class="u">nazhika · vinazhika</div></div>` +
+          `<div class="hm">${nazhikaToHM(d.tithi.endNazhika)}</div>` +
         `</div>` +
 
         `<div class="dd-row"><span class="k">Malayalam month</span>` +
@@ -315,13 +319,26 @@
   dlg.addEventListener("cancel", (e) => { e.preventDefault(); closeDetail(); });
 
   function moonText(d) {
-    if (d.moon === "full") return "Pournami · full moon";
-    if (d.moon === "new") return "Amavasi · new moon";
+    if (d.moon === "full") return "Purnima · full moon";
+    if (d.moon === "new") return "Amavasya · new moon";
     return d.tithi.paksha === "shukla" ? "Waxing" : "Waning";
   }
 
   const fmtNazhika = (s) =>
     (s || "").replace("-", '<span style="color:#c3b8a0">–</span>');
+
+  // "NN-VV" nazhika–vinazhika is a pure duration after sunrise:
+  //   1 nazhika = 24 min, 1 vinazhika = 24 s (1/60 nazhika).
+  // So this converts to clock hours/minutes without needing the sunrise time.
+  // (The Malayalam day runs sunrise-to-sunrise, so a value past ~18h ends
+  // after midnight, still before the next sunrise.)
+  function nazhikaToHM(s) {
+    const m = /^(\d+)-(\d+)$/.exec((s || "").trim());
+    if (!m) return "";
+    const mins = Math.round((+m[1]) * 24 + (+m[2]) * 0.4);
+    const h = Math.floor(mins / 60);
+    return `Ends ${h}h ${mins % 60}m after sunrise`;
+  }
 
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
