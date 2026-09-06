@@ -216,8 +216,7 @@
         monthStrip +
         (d.lunarMonthStart ? `<div class="pan-lunar">${esc(d.lunarMonthStart)}</div>` : "") +
         panFestHtml +
-        `<div class="nak ml">${esc(d.nak.ml)} <span class="nz">${d.nak.endNazhika}` +
-          `<span class="hm-inline">(${nazhikaHM(d.nak.endNazhika)})</span></span>` +
+        `<div class="nak ml">${esc(d.nak.ml)} <span class="nz">${d.nak.endNazhika}</span>` +
           (moon ? `<span class="moon-slot">${moon}</span>` : "") +
         `</div>` +
         `<div class="tithi ml">${esc(d.tithi.ml)} <span class="nz">${d.tithi.endNazhika}</span></div>` +
@@ -473,7 +472,23 @@
     return INDEX.months.includes(key) ? key : INDEX.months[0];
   }
 
-  async function route() {
+  // On phones the day list is long; after rendering the current month with no
+  // specific day requested, glide it so today's row sits just under the pinned
+  // header band. Desktop grid has no scroll to speak of, so it's a no-op there.
+  function scrollTodayIntoView() {
+    if (!window.matchMedia("(max-width: 640px)").matches) return;
+    const cell = app.querySelector(".cell.today");
+    if (!cell) return;
+    const header = document.querySelector(".site-header");
+    const band = document.querySelector(".masthead");
+    const pinned =
+      (header ? header.getBoundingClientRect().height : 0) +
+      (band ? band.getBoundingClientRect().height : 0);
+    const y = cell.getBoundingClientRect().top + window.scrollY - pinned - 8;
+    window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+  }
+
+  async function route(isBoot) {
     const { month, day } = parseHash();
     const want = month || defaultMonth();
     if (!INDEX.months.includes(want)) {
@@ -503,6 +518,11 @@
       } else if (dlg.open) {
         dlg.close();
       }
+      // first load, landed on the current month, no day open: on phones,
+      // glide the list to today so it starts near the top of the viewport.
+      if (isBoot && !day && want === todayISO().slice(0, 7)) {
+        requestAnimationFrame(scrollTodayIntoView);
+      }
     } catch (err) {
       app.innerHTML = `<div class="loading">Could not load ${esc(want)}.<br>${esc(err.message)}</div>`;
     }
@@ -524,6 +544,6 @@
     if (!hashMonth()) {
       history.replaceState(null, "", `#/${defaultMonth()}`);
     }
-    route();
+    route(true);
   })();
 })();

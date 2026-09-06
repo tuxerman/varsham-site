@@ -558,10 +558,6 @@ a:hover { color: #7d2c20; }
 }
 .cell .tithi .nz { color: #b0a68f; font-size: 11px; }
 
-/* the inline hours gloss is mobile-list only; the desktop grid cell is too
-   dense to add it and the detail dialog already spells it out */
-.cell .hm-inline { display: none; }
-
 /* moon glyphs (inline svg from JS) */
 .moon { width: 16px; height: 16px; display: block; }
 
@@ -645,29 +641,21 @@ a:hover { color: #7d2c20; }
     grid-column: 2;
     grid-row: 2;
     text-align: center;
-    white-space: nowrap;
     font-family: "Manjari", "Besley", serif;
     font-size: 13px;
     color: #b8ad97;
     margin-top: 3px;
   }
+  /* solar and lunar month names on one line; the year is dropped on mobile */
   .masthead .ml-months .names { display: inline; }
   .masthead .ml-months .lunar {
-    display: block;
+    display: inline;
     font-family: "Manjari", "Besley", serif;
     font-size: 12px;
     color: #8a7d64;
-    margin-top: 1px;
   }
-  .masthead .ml-months .yr {
-    display: inline;
-    font-family: "Besley", Georgia, serif;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    color: #8a7d64;
-    margin-left: 6px;
-  }
-  .masthead .ml-months .yr::before { content: "· "; }
+  .masthead .ml-months .lunar::before { content: " · "; color: #6f6450; }
+  .masthead .ml-months .yr { display: none; }
 
   /* mobile nav: a single centred row under the dark header band —
      [Today]   dd / mm / yyyy  [Go]   (the ‹ › and month title are in the band) */
@@ -712,6 +700,8 @@ a:hover { color: #7d2c20; }
   .cell.today { box-shadow: inset 0 0 0 2px var(--vermilion); }        /* full outline on today */
   .cell.today.lunar-start,
   .cell.today.month-start { box-shadow: inset 0 0 0 2px var(--vermilion); }
+  /* keep today's row clear of the pinned header band when scrolled to */
+  .cell.today { scroll-margin-top: 160px; }
 
   .cell .head,
   .cell .aside { display: none; }
@@ -799,12 +789,6 @@ a:hover { color: #7d2c20; }
     line-height: 1.35;
   }
   .cell .pan .nak .nz { color: var(--faint); font-size: 15px; }
-  /* clock-time gloss after the nakshatram's nazhika–vinazhika value */
-  .cell .pan .nak .nz .hm-inline {
-    display: inline;
-    color: #b8ac93;
-    margin-left: 4px;
-  }
   .cell .pan .nak .moon-slot {
     margin-left: auto;
     align-self: center;
