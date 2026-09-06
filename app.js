@@ -66,6 +66,15 @@
       : (d.festivalsEn && d.festivalsEn.length ? d.festivalsEn
         : (d.events || []))).join(", ");
 
+  // English gloss for the observances row, only when it differs from the
+  // Malayalam text we're already showing.
+  const festTextEn = (d) => {
+    if (!(d.festivalsMl && d.festivalsMl.length)) return "";
+    if (!(d.festivalsEn && d.festivalsEn.length)) return "";
+    const en = d.festivalsEn.join(", ");
+    return en === d.festivalsMl.join(", ") ? "" : en;
+  };
+
   // ------------------------------------------------------------- rendering
 
   function render(doc) {
@@ -221,13 +230,15 @@
     const paksha = PAKSHA_ML[d.tithi.paksha] || "";
     const [gMonth, gYear] = doc.gregorian.split(" ");
     const nak2 = d.nak2
-      ? `<div class="dd-row"><span class="k">Second nakshatram</span>` +
-        `<span class="v"><span class="ml">${esc(d.nak2.ml)}</span> ` +
-        `<span class="tl">ends ${d.nak2.endNazhika}</span></span></div>`
+      ? `<div class="dd-row wide sep"><span class="k">Second nakshatram</span>` +
+        `<span class="v"><span class="ml">${esc(d.nak2.ml)}</span>` +
+        (d.nak2.en ? ` <span class="en">${esc(d.nak2.en)}</span>` : "") +
+        ` <span class="tl">ends ${d.nak2.endNazhika}</span></span></div>`
       : "";
     const fest = festText(d);
+    const festEn = festTextEn(d);
     const holiday = d.publicHoliday
-      ? "Public holiday" : (d.bankHoliday ? "Bank holiday" : "—");
+      ? "Public" : (d.bankHoliday ? "Bank" : "—");
 
     dlg.innerHTML =
       `<button class="dd-close" aria-label="Close">×</button>` +
@@ -246,10 +257,12 @@
           `<div class="grow"><div class="lab">Nakshatram</div>` +
             `<div class="name">${esc(d.nak.ml)}` +
               (d.nak.en ? ` <span class="en">${esc(d.nak.en)}</span>` : "") +
+            `</div>` +
+            `<div class="meta">` +
+              `<div class="mrow"><span class="n">${fmtNazhika(d.nak.endNazhika)}</span> ` +
+                `<span class="u">nazhika · vinazhika</span></div>` +
+              `<div class="ends">${nazhikaToHM(d.nak.endNazhika)}</div>` +
             `</div></div>` +
-          `<div class="end"><div class="n">${fmtNazhika(d.nak.endNazhika)}</div>` +
-            `<div class="u">nazhika · vinazhika</div></div>` +
-          `<div class="hm">${nazhikaToHM(d.nak.endNazhika)}</div>` +
         `</div>` +
 
         `<div class="dd-feature">` +
@@ -259,16 +272,19 @@
             `<circle cx="24" cy="22" r="3" fill="#262019"/>` +
             `<circle cx="18" cy="26" r="1.6" fill="#262019"/>` +
           `</svg></div>` +
-          `<div class="grow"><div class="lab">Tithi ` +
-            `<span class="ml">· ${paksha}</span></div>` +
+          `<div class="grow"><div class="lab">Tithi</div>` +
             `<div class="name">${esc(d.tithi.ml)}` +
               (d.tithi.en ? ` <span class="en">${esc(d.tithi.en)}</span>` : "") +
+              (paksha ? ` <span class="paksha ml">· ${paksha}</span>` : "") +
+            `</div>` +
+            `<div class="meta">` +
+              `<div class="mrow"><span class="n">${fmtNazhika(d.tithi.endNazhika)}</span> ` +
+                `<span class="u">nazhika · vinazhika</span></div>` +
+              `<div class="ends">${nazhikaToHM(d.tithi.endNazhika)}</div>` +
             `</div></div>` +
-          `<div class="end"><div class="n">${fmtNazhika(d.tithi.endNazhika)}</div>` +
-            `<div class="u">nazhika · vinazhika</div></div>` +
-          `<div class="hm">${nazhikaToHM(d.tithi.endNazhika)}</div>` +
         `</div>` +
 
+        `<div class="dd-grid">` +
         `<div class="dd-row"><span class="k">Malayalam month</span>` +
           `<span class="v"><span class="ml">${esc(d.kvMonth.ml)}</span> ` +
           `<span class="tl">${d.kvMonth.en}</span></span></div>` +
@@ -280,15 +296,16 @@
           `<span class="v" style="color:var(--vermilion);font-family:Fraunces,Georgia,serif;font-size:17px">` +
           `${doc.malayalam.kollavarshamYears.join("–")} · ${d.kv}</span></div>` +
         `<div class="dd-row"><span class="k">Tithi number</span>` +
-          `<span class="v disp">${d.tithi.num} <span style="color:var(--faint)">/ 30</span></span></div>` +
+          `<span class="v disp">${d.tithi.num} <span style="color:var(--faint)">/ 30</span>` +
+          `<span class="tl"> · ${moonPhaseShort(d)}</span></span></div>` +
         nak2 +
-        `<div class="dd-row"><span class="k">Moon phase</span>` +
-          `<span class="v" style="display:flex;align-items:center;gap:8px">` +
-          `${HALF_MOON}<span class="disp" style="font-size:14px;color:#423b30">${moonText(d)}</span></span></div>` +
-        `<div class="dd-row"><span class="k">Observances</span>` +
-          `<span class="v ml" style="color:var(--vermilion);font-size:16px">${fest ? esc(fest) : "—"}</span></div>` +
-        `<div class="dd-row"><span class="k">Bank / public holiday</span>` +
+        `<div class="dd-row wide${d.nak2 ? "" : " sep"}"><span class="k">Observances</span>` +
+          `<span class="v ml" style="color:var(--vermilion);font-size:16px">${fest ? esc(fest) : "—"}` +
+          (festEn ? ` <span class="en">${esc(festEn)}</span>` : "") +
+          `</span></div>` +
+        `<div class="dd-row wide"><span class="k">Holiday</span>` +
           `<span class="v disp" style="color:var(--muted);font-size:14px">${holiday}</span></div>` +
+        `</div>` +
         `<div class="dd-back">` +
           `<button class="today-btn disp" type="button">&#8249;&nbsp; Back to calendar</button>` +
         `</div>` +
@@ -322,6 +339,13 @@
     if (d.moon === "full") return "Purnima · full moon";
     if (d.moon === "new") return "Amavasya · new moon";
     return d.tithi.paksha === "shukla" ? "Waxing" : "Waning";
+  }
+
+  // short phase for the inline "tithi number" cell: no "· full moon" tail
+  function moonPhaseShort(d) {
+    if (d.moon === "full") return "Purnima";
+    if (d.moon === "new") return "Amavasya";
+    return d.tithi.paksha === "shukla" ? "waxing" : "waning";
   }
 
   const fmtNazhika = (s) =>

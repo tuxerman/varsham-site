@@ -808,7 +808,7 @@ a:hover { color: #7d2c20; }
   border: 1px solid var(--rule);
   border-radius: 0;
   padding: 0;
-  width: 540px;
+  width: 620px;
   max-width: calc(100vw - 32px);
   background: var(--card);
   color: var(--ink);
@@ -849,23 +849,37 @@ a:hover { color: #7d2c20; }
 
 .dd-close {
   position: absolute;
-  top: 14px;
+  top: 16px;
   right: 16px;
   appearance: none;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(184, 173, 151, 0.5);
+  border-radius: 50%;
   background: transparent;
   color: #b8ad97;
-  font-size: 22px;
+  font-size: 18px;
   cursor: pointer;
   line-height: 1;
+}
+.dd-close:hover {
+  background: rgba(184, 173, 151, 0.12);
+  color: #d8cdb5;
+}
+.dd-close:focus { outline: none; }
+.dd-close:focus-visible {
+  outline: 2px solid rgba(184, 173, 151, 0.6);
+  outline-offset: 2px;
 }
 
 .dd-body { padding: 8px 40px 34px; }
 
 .dd-feature {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 18px;
   padding: 22px 0;
   border-bottom: 1px solid #e8e1d0;
@@ -880,6 +894,7 @@ a:hover { color: #7d2c20; }
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 .dd-feature .lab {
   font-family: "Besley", Georgia, serif;
@@ -887,12 +902,6 @@ a:hover { color: #7d2c20; }
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--faint);
-}
-.dd-feature .lab .ml {
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 12px;
-  color: var(--muted);
 }
 .dd-feature .name {
   font-family: "Manjari", "Besley", serif;
@@ -909,43 +918,58 @@ a:hover { color: #7d2c20; }
   margin-left: 6px;
   white-space: nowrap;
 }
-.dd-feature .grow { flex: 1 1 auto; min-width: 0; }
-.dd-feature .end {
-  text-align: right;
-  flex-shrink: 0;
-}
-.dd-feature .end .n {
-  font-family: "Besley", Georgia, serif;
-  font-size: 24px;
+.dd-feature .name .paksha {
+  font-size: 15px;
   color: var(--ink);
-  line-height: 1;
+  margin-left: 4px;
+  white-space: nowrap;
 }
-.dd-feature .end .u {
-  font-family: "Besley", Georgia, serif;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--faint);
-  margin-top: 3px;
-}
-.dd-feature .hm {
-  flex: 1 1 100%;
-  padding-left: 68px;
+.dd-feature .grow { flex: 1 1 auto; min-width: 0; }
+
+/* quiet metadata under the name: value + unit on one line, plain-language end below */
+.dd-feature .meta {
+  margin-top: 10px;
   font-family: "Besley", Georgia, serif;
   font-size: 12px;
   color: var(--muted);
-  line-height: 1.35;
-  overflow-wrap: anywhere;
+}
+.dd-feature .meta .mrow { line-height: 1; }
+.dd-feature .meta .n {
+  font-size: 14px;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+.dd-feature .meta .u {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.dd-feature .meta .ends {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink);
 }
 
+/* atomic facts in a 2-column grid: each cell stacks label over value,
+   so the pair reads together and the block is half as tall */
+.dd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 36px;
+}
 .dd-row {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 18px;
-  padding: 13px 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 0;
   border-bottom: 1px solid #e8e1d0;
 }
+.dd-row.wide { grid-column: 1 / -1; }
+/* first full-width row after the paired grid: a little extra breathing room
+   above so the shift from two columns to one reads as a section change */
+.dd-row.wide.sep { padding-top: 18px; }
 .dd-row:last-child { border-bottom: none; }
 
 .dd-back {
@@ -960,14 +984,17 @@ a:hover { color: #7d2c20; }
   text-transform: uppercase;
   color: var(--faint);
 }
-.dd-row .v { text-align: right; }
+.dd-row .v { text-align: left; }
 .dd-row .v .ml { font-size: 18px; color: var(--ink); }
+.dd-row .v .en,
 .dd-row .v .tl {
   font-family: "Besley", Georgia, serif;
   font-size: 13px;
   color: var(--muted);
   font-style: italic;
 }
+.dd-row .v .en { margin-left: 5px; }
+.dd-row .v .tl { margin-left: 4px; }
 .dd-row .v.disp {
   font-family: "Besley", Georgia, serif;
   font-size: 16px;
@@ -988,14 +1015,14 @@ a:hover { color: #7d2c20; }
   .dd-head .big .date { font-size: 64px; }
   .dd-body { padding: 8px 24px 30px; }
 
-  /* feature blocks: let the name wrap and drop the end-time under it */
-  .dd-feature { flex-wrap: wrap; gap: 12px; padding: 18px 0; }
+  /* feature blocks: one left-aligned stack, name wraps freely */
+  .dd-feature { column-gap: 12px; padding: 18px 0; }
   .dd-feature .grow { flex: 1 1 140px; min-width: 0; }
   .dd-feature .name { font-size: 24px; overflow-wrap: anywhere; }
-  .dd-feature .end { flex: 1 1 100%; text-align: left; padding-left: 68px; }
-  .dd-feature .end .n { font-size: 20px; }
 
-  /* rows: stack label over value so nothing is pushed off-screen */
-  .dd-row { flex-direction: column; align-items: flex-start; gap: 3px; padding: 11px 0; }
-  .dd-row .v, .dd-row .v.disp { text-align: left; }
+  /* rows: single column so nothing is pushed off-screen */
+  .dd-grid { grid-template-columns: 1fr; column-gap: 0; }
+  .dd-row { gap: 3px; padding: 11px 0; }
+  .dd-row:nth-last-child(2):nth-child(odd) { border-bottom: 1px solid #e8e1d0; }
+  .dd-row:last-child, .dd-row.wide { border-bottom: none; }
 }
