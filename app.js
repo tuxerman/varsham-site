@@ -170,7 +170,7 @@
 
   function dayCell(d, isFirst, doc) {
     const wknd = d.wd === "Sun" ? "sun" : (d.wd === "Sat" ? "sat" : "");
-    const cell = el("div", `cell clickable ${wknd}${d.monthStart ? " month-start" : ""}${d.date === todayISO() ? " today" : ""}`);
+    const cell = el("div", `cell clickable ${wknd}${d.monthStart ? " month-start" : ""}${d.lunarMonthStart ? " lunar-start" : ""}${d.date === todayISO() ? " today" : ""}`);
     // navigate to the day so the URL is shareable; route() opens the detail
     cell.addEventListener("click", () => { location.hash = `#/${d.date}`; });
 
@@ -216,7 +216,8 @@
         monthStrip +
         (d.lunarMonthStart ? `<div class="pan-lunar">${esc(d.lunarMonthStart)}</div>` : "") +
         panFestHtml +
-        `<div class="nak ml">${esc(d.nak.ml)} <span class="nz">${d.nak.endNazhika}</span>` +
+        `<div class="nak ml">${esc(d.nak.ml)} <span class="nz">${d.nak.endNazhika}` +
+          `<span class="hm-inline">(${nazhikaHM(d.nak.endNazhika)})</span></span>` +
           (moon ? `<span class="moon-slot">${moon}</span>` : "") +
         `</div>` +
         `<div class="tithi ml">${esc(d.tithi.ml)} <span class="nz">${d.tithi.endNazhika}</span></div>` +
@@ -356,13 +357,14 @@
   // So this converts to clock hours/minutes without needing the sunrise time.
   // (The Malayalam day runs sunrise-to-sunrise, so a value past ~18h ends
   // after midnight, still before the next sunrise.)
-  function nazhikaToHM(s) {
+  function nazhikaHM(s) {
     const m = /^(\d+)-(\d+)$/.exec((s || "").trim());
     if (!m) return "";
     const mins = Math.round((+m[1]) * 24 + (+m[2]) * 0.4);
-    const h = Math.floor(mins / 60);
-    return `Ends ${h}h ${mins % 60}m after sunrise`;
+    return `${Math.floor(mins / 60)}h ${mins % 60}m`;
   }
+  const nazhikaToHM = (s) =>
+    nazhikaHM(s) ? `Ends ${nazhikaHM(s)} after sunrise` : "";
 
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));

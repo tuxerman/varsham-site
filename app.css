@@ -438,7 +438,11 @@ a:hover { color: #7d2c20; }
 .cell.empty  { background: var(--card-empty); }
 .cell.sun,
 .cell.sat    { background: var(--card-sun); }
-.cell.month-start { box-shadow: inset 3px 0 0 0 var(--vermilion); }
+/* left rail: vermilion marks a Kollavarsham (solar) month start; grey marks
+   an amanta lunar month start. The KV bar wins when both fall on one day. */
+.cell.lunar-start { box-shadow: inset 3px 0 0 0 #a99e88; }
+.cell.month-start,
+.cell.month-start.lunar-start { box-shadow: inset 3px 0 0 0 var(--vermilion); }
 .cell.clickable { cursor: pointer; }
 .cell.clickable:hover {
   background: #ffffff;
@@ -446,7 +450,11 @@ a:hover { color: #7d2c20; }
   position: relative;
   z-index: 1;
 }
-.cell.clickable.month-start:hover {
+.cell.clickable.lunar-start:hover {
+  box-shadow: inset 3px 0 0 0 #a99e88, 0 4px 14px rgba(38, 32, 25, 0.14);
+}
+.cell.clickable.month-start:hover,
+.cell.clickable.month-start.lunar-start:hover {
   box-shadow: inset 3px 0 0 0 var(--vermilion), 0 4px 14px rgba(38, 32, 25, 0.14);
 }
 .cell.clickable.today:hover {
@@ -454,7 +462,9 @@ a:hover { color: #7d2c20; }
   box-shadow: inset 0 0 0 2px var(--vermilion), 0 4px 14px rgba(38, 32, 25, 0.14);
 }
 .cell.today { background: #f3ece0; box-shadow: inset 0 0 0 2px var(--vermilion); }
-.cell.today.month-start { box-shadow: inset 0 0 0 2px var(--vermilion), inset 3px 0 0 0 var(--vermilion); }
+.cell.today.lunar-start { box-shadow: inset 0 0 0 2px var(--vermilion), inset 3px 0 0 0 #a99e88; }
+.cell.today.month-start,
+.cell.today.month-start.lunar-start { box-shadow: inset 0 0 0 2px var(--vermilion), inset 3px 0 0 0 var(--vermilion); }
 
 .cell .head {
   grid-column: 1 / -1;
@@ -547,6 +557,10 @@ a:hover { color: #7d2c20; }
   line-height: 1.4;
 }
 .cell .tithi .nz { color: #b0a68f; font-size: 11px; }
+
+/* the inline hours gloss is mobile-list only; the desktop grid cell is too
+   dense to add it and the detail dialog already spells it out */
+.cell .hm-inline { display: none; }
 
 /* moon glyphs (inline svg from JS) */
 .moon { width: 16px; height: 16px; display: block; }
@@ -691,8 +705,12 @@ a:hover { color: #7d2c20; }
     align-items: flex-start;
   }
   .cell.empty { display: none; }
-  .cell.month-start { box-shadow: inset 0 3px 0 0 var(--vermilion); }  /* TOP border on phone */
+  /* TOP border on phone: vermilion = KV month start, grey = lunar month start */
+  .cell.lunar-start { box-shadow: inset 0 3px 0 0 #a99e88; }
+  .cell.month-start,
+  .cell.month-start.lunar-start { box-shadow: inset 0 3px 0 0 var(--vermilion); }
   .cell.today { box-shadow: inset 0 0 0 2px var(--vermilion); }        /* full outline on today */
+  .cell.today.lunar-start,
   .cell.today.month-start { box-shadow: inset 0 0 0 2px var(--vermilion); }
 
   .cell .head,
@@ -781,6 +799,12 @@ a:hover { color: #7d2c20; }
     line-height: 1.35;
   }
   .cell .pan .nak .nz { color: var(--faint); font-size: 15px; }
+  /* clock-time gloss after the nakshatram's nazhika–vinazhika value */
+  .cell .pan .nak .nz .hm-inline {
+    display: inline;
+    color: #b8ac93;
+    margin-left: 4px;
+  }
   .cell .pan .nak .moon-slot {
     margin-left: auto;
     align-self: center;
