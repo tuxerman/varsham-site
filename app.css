@@ -298,7 +298,10 @@ a:hover { color: #7d2c20; }
 .dd-back .today-btn:hover { background: #f4e9e4; }
 
 /* month/year picker: a pill trigger (same height family as Today) that
-   opens a popover with a year switcher over a 3x4 month grid.            */
+   opens a popover with three tabs — English (3x4 Gregorian grid),
+   Malayalam (Kollavarsham months), Lunar (Sanskrit amanta months).
+   On phones the panel becomes a bottom sheet (see the max-width:640px
+   block near the end of this file).                                     */
 .monthnav .picker { position: relative; }
 
 .monthnav .picker-trigger {
@@ -336,25 +339,65 @@ a:hover { color: #7d2c20; }
   top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  width: 260px;
+  width: 340px;
   background: var(--card);
   border: 1px solid var(--rule);
-  border-radius: 10px;
-  box-shadow: 0 10px 28px rgba(38, 32, 25, 0.14);
-  padding: 14px;
+  border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(38, 32, 25, 0.18);
+  padding: 0;
   z-index: 5;
+  overflow: hidden;
 }
+.monthnav .picker-body { padding: 0; }
+
+/* the three-tab segmented header */
+.monthnav .picker-tabs {
+  display: flex;
+  background: var(--card-sun);
+  border-bottom: 1px solid var(--rule);
+}
+.monthnav .picker-tab {
+  appearance: none;
+  flex: 1 1 0;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  padding: 14px 6px 12px;
+  font-family: "Besley", Georgia, serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  position: relative;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+.monthnav .picker-tab + .picker-tab { border-left: 1px solid var(--rule-soft); }
+.monthnav .picker-tab:hover { color: var(--ink); background: rgba(255, 255, 255, 0.4); }
+.monthnav .picker-tab[aria-selected="true"] { color: var(--vermilion); background: var(--card); }
+.monthnav .picker-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: var(--vermilion);
+}
+
 .monthnav .picker-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  padding: 14px 16px 10px;
 }
 .monthnav .picker-yr {
   font-family: "Besley", Georgia, serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.04em;
+  /* Besley defaults to oldstyle figures — the 0 drops below the baseline and
+     reads as lighter next to the 2s. Force lining, tabular. */
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "onum" 0, "tnum" 1;
 }
 .monthnav .picker-yr-nav {
   appearance: none;
@@ -364,34 +407,131 @@ a:hover { color: #7d2c20; }
   color: var(--ink-soft);
   font-family: "Besley", Georgia, serif;
   font-weight: 600;
-  font-size: 15px;
-  padding: 4px 8px;
+  font-size: 17px;
+  padding: 4px 10px;
   line-height: 1;
+  border-radius: 6px;
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
-.monthnav .picker-yr-nav:hover { color: var(--ink); }
+.monthnav .picker-yr-nav:hover { color: var(--ink); background: #f0ece1; }
 .monthnav .picker-yr-nav:disabled { opacity: 0.3; cursor: default; }
 
+/* English tab: the 3x4 Gregorian-month grid */
 .monthnav .picker-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
+  padding: 4px 16px 18px;
 }
 .monthnav .picker-mo {
   appearance: none;
   cursor: pointer;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   background: transparent;
   color: var(--ink-soft);
   font-family: "Besley", Georgia, serif;
   font-size: 13px;
-  padding: 9px 0;
+  padding: 11px 0;
   text-align: center;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 .monthnav .picker-mo:hover:not(:disabled) { background: #f0ece1; color: var(--ink); }
 .monthnav .picker-mo:disabled { color: var(--rule); cursor: default; }
 .monthnav .picker-mo.current { background: var(--vermilion); color: #fff; }
 .monthnav .picker-mo.current:hover { background: var(--vermilion); }
+
+/* Malayalam / Lunar tabs: a column of full-width month rows */
+.monthnav .picker-list {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.monthnav .picker-loading {
+  padding: 22px 12px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+.monthnav .picker-row {
+  appearance: none;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 8px;
+  text-align: left;
+  transition: background-color 0.16s ease;
+}
+.monthnav .picker-row:hover { background: #f0ece1; }
+.monthnav .picker-row .r-lead {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+}
+.monthnav .picker-row .r-name {
+  font-family: "Manjari", "Besley", serif;
+  font-size: 17px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.monthnav .picker-row .r-name.latin {
+  font-family: "Besley", Georgia, serif;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+/* Kollavarsham year — an inline caption on Malayalam rows, not a nav axis */
+.monthnav .picker-row .r-kv {
+  font-family: "Besley", Georgia, serif;
+  font-size: 11.5px;
+  color: var(--faint);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.monthnav .picker-row .r-when {
+  font-family: "Besley", Georgia, serif;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.monthnav .picker-row .r-when em { font-style: normal; color: var(--ink-faint); }
+.monthnav .picker-row.current { background: var(--vermilion); }
+.monthnav .picker-row.current .r-name,
+.monthnav .picker-row.current .r-when,
+.monthnav .picker-row.current .r-when em { color: #fff; }
+.monthnav .picker-row.current .r-kv { color: rgba(255, 255, 255, 0.7); }
+.monthnav .picker-row.current .r-when { opacity: 0.82; }
+/* adhika masa: the month repeats within the year — mark the 2nd with a + */
+.monthnav .picker-row.adhika .r-name::after {
+  content: "+";
+  font-family: "Besley", Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--vermilion);
+  margin-left: 6px;
+  vertical-align: baseline;
+}
+.monthnav .picker-row.current.adhika .r-name::after { color: #fff; }
+
+/* phone-only bottom-sheet chrome (hidden on desktop, where .is-sheet
+   is never set) */
+.monthnav .sheet-grip,
+.monthnav .sheet-title,
+.monthnav .sheet-close { display: none; }
 
 /* ------------------------------------------------------- weekday header */
 
@@ -671,6 +811,100 @@ a:hover { color: #7d2c20; }
   .monthnav .today-btn:hover { background: rgba(255,255,255,0.06); }
   .dd-back .today-btn:hover { background: rgba(38,32,25,0.05); }
   .weekdays, .legend { display: none; }
+
+  /* month picker on phones: a full-width bottom sheet over a scrim, instead
+     of the desktop popover anchored to the trigger. The scrim + panel are
+     appended inside .monthnav .picker (so the base picker rules still apply);
+     position:fixed lifts the scrim to the viewport. */
+  body.sheet-open { overflow: hidden; }
+  .monthnav .picker-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(38, 32, 25, 0.42);
+    display: flex;
+    align-items: flex-end;
+  }
+  .monthnav .picker-panel.is-sheet {
+    position: static;
+    transform: none;
+    width: 100%;
+    max-height: 88vh;
+    border: none;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -8px 30px rgba(38, 32, 25, 0.2);
+    display: flex;
+    flex-direction: column;
+    animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.25, 1);
+  }
+  @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .monthnav .picker-panel.is-sheet { animation: none; }
+  }
+
+  .monthnav .picker-panel.is-sheet .sheet-grip {
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--rule);
+    border-radius: 999px;
+    margin: 10px auto 4px;
+    flex: none;
+  }
+  .monthnav .picker-panel.is-sheet .sheet-title {
+    display: block;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 4px 0 12px;
+    flex: none;
+  }
+  .monthnav .picker-panel.is-sheet .picker-tabs { flex: none; }
+  .monthnav .picker-panel.is-sheet .picker-tab { padding: 16px 4px 14px; font-size: 12px; }
+  .monthnav .picker-panel.is-sheet .picker-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .monthnav .picker-panel.is-sheet .picker-head { padding: 16px 18px 12px; flex: none; }
+  .monthnav .picker-panel.is-sheet .picker-yr { font-size: 17px; }
+  .monthnav .picker-panel.is-sheet .picker-yr-nav { font-size: 20px; padding: 8px 14px; }
+  .monthnav .picker-panel.is-sheet .picker-grid { gap: 8px; padding: 6px 16px 22px; }
+  .monthnav .picker-panel.is-sheet .picker-mo { padding: 15px 0; font-size: 14px; }
+  .monthnav .picker-panel.is-sheet .picker-list {
+    flex: 1 1 auto;
+    min-height: 200px;
+    max-height: none;
+    padding: 6px 10px 16px;
+  }
+  .monthnav .picker-panel.is-sheet .picker-row { padding: 15px 14px; }
+  .monthnav .picker-panel.is-sheet .picker-row .r-name { font-size: 18px; }
+  .monthnav .picker-panel.is-sheet .picker-row .r-name.latin { font-size: 16px; }
+  .monthnav .picker-panel.is-sheet .picker-row .r-kv { font-size: 12px; }
+  .monthnav .picker-panel.is-sheet .picker-row .r-when { font-size: 12.5px; }
+  .monthnav .picker-panel.is-sheet .sheet-close {
+    display: block;
+    flex: none;
+    width: calc(100% - 32px);
+    margin: 4px 16px 16px;
+    padding: 14px 0;
+    text-align: center;
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    font-family: "Besley", Georgia, serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
 
   .grid {
     display: block;

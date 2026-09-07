@@ -395,10 +395,76 @@
 
   const MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+  // Which picker tab the trigger last opened. Kept across renders so someone
+  // who thinks in Kollavarsham isn't re-picking "Malayalam" every time.
+  let pickerTab = "en";  // "en" | "ml" | "lunar"
+
+  // Malayalam solar month number (Chingam = 1) — only used to work out which
+  // Kollavarsham year a month-start day belongs to for its caption.
+  const ML_MONTH_NO = {
+    Chingam: 1, Kanni: 2, Thulam: 3, Vrischikam: 4, Dhanu: 5, Makaram: 6,
+    Kumbham: 7, Meenam: 8, Medam: 9, Edavam: 10, Mithunam: 11, Karkidakam: 12,
+  };
+
+  // ---- month-start index (built lazily, per Gregorian year) -----------------
+  //
+  // All three tabs navigate to a Gregorian "YYYY-MM" and all three step by
+  // Gregorian year — the English tab directly, the other two by "the Gregorian
+  // month this Malayalam / lunar month begins in". That mapping isn't in
+  // index.json, but every month file already carries it per-day (d.monthStart
+  // + d.kvMonth, d.lunarMonthStart), so we derive it: on first open of a
+  // non-English tab for year Y we fetch that year's ~12 month files (tiny, and
+  // cached for calendar nav anyway) and scan their days. Both lists come out
+  // in Gregorian-date order. Result shape, cached in monthStarts.get(Y):
+  //   { ml:    [{ date, monthKey, en, ml, kvYear }],   // KV solar months
+  //     lunar: [{ date, monthKey, name, adhika }] }      // Sanskrit amanta
+  const monthStarts = new Map();
+
+  async function buildYearStarts(year) {
+    if (monthStarts.has(year)) return monthStarts.get(year);
+    const keys = INDEX.months.filter((m) => m.startsWith(String(year) + "-"));
+    const docs = await Promise.all(keys.map((k) => loadMonth(k).catch(() => null)));
+    const ml = [], lunar = [];
+    const seenLunar = new Set();
+    docs.forEach((doc) => {
+      if (!doc) return;
+      const kvSpan = doc.malayalam.kollavarshamYears || [];
+      (doc.malayalam.days || []).forEach((d) => {
+        if (d.monthStart && d.kvMonth) {
+          // KV year shown as an inline caption only (no grouping). A KV year
+          // runs Chingam→Karkidakam, so in a file spanning two (…, N+1) the
+          // month is the later year iff it's Chingam or after.
+          const later = ML_MONTH_NO[d.kvMonth.en] >= ML_MONTH_NO.Chingam;
+          const kvYear = kvSpan.length === 2 ? (later ? kvSpan[1] : kvSpan[0]) : kvSpan[0];
+          ml.push({ date: d.date, monthKey: doc.month, ml: d.kvMonth.ml, kvYear });
+        }
+        if (d.lunarMonthStart) {
+          // An adhika masa repeats the name within the year; tag the 2nd+.
+          const adhika = seenLunar.has(d.lunarMonthStart);
+          seenLunar.add(d.lunarMonthStart);
+          lunar.push({ date: d.date, monthKey: doc.month, name: d.lunarMonthStart, adhika });
+        }
+      });
+    });
+    ml.sort((a, b) => a.date < b.date ? -1 : 1);
+    lunar.sort((a, b) => a.date < b.date ? -1 : 1);
+    const out = { ml, lunar };
+    monthStarts.set(year, out);
+    return out;
+  }
+
+  const fmtStartWhen = (iso) => {
+    const [, mm, dd] = iso.split("-");
+    return `${MONTH_ABBR[Number(mm) - 1]} <em>${Number(dd)}</em>`;
+  };
+
   // Trigger button + popover that replaces the old dd/mm/yyyy typing form.
   // Trigger shows the current month (Gregorian + Malayalam, same info the
-  // masthead already states); the popover is a year switcher over a 3x4
-  // month grid, clamped to the months INDEX actually has data for.
+  // masthead already states); the popover has three tabs — English (a 3x4
+  // Gregorian-month grid, clamped to what INDEX has), Malayalam (Kollavarsham
+  // months as a list), Lunar (Sanskrit amanta months as a list). Picking any
+  // entry routes to a Gregorian "YYYY-MM". On phones the panel is a bottom
+  // sheet (see .picker-panel in the max-width:640px block).
   function buildMonthPicker(monthKey, gregorianText, mlText) {
     const wrap = el("div", "picker");
     const trigger = el("button", "picker-trigger disp", "");
@@ -412,52 +478,157 @@
       `<svg class="pt-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>`;
     wrap.appendChild(trigger);
 
-    let panel = null;
+    let panel = null, scrim = null;
     let panelYear = Number(monthKey.slice(0, 4));
 
     const closePanel = () => {
       if (!panel) return;
       panel.remove();
+      if (scrim) { scrim.remove(); scrim = null; }
       panel = null;
+      document.body.classList.remove("sheet-open");
       trigger.setAttribute("aria-expanded", "false");
       document.removeEventListener("mousedown", onOutside, true);
       document.removeEventListener("keydown", onKey, true);
     };
-    const onOutside = (e) => { if (!wrap.contains(e.target)) closePanel(); };
+    const onOutside = (e) => {
+      if (!wrap.contains(e.target) && !(scrim && scrim.contains(e.target) && e.target !== scrim)) {
+        if (!panel || !panel.contains(e.target)) closePanel();
+      }
+    };
     const onKey = (e) => { if (e.key === "Escape") { closePanel(); trigger.focus(); } };
 
-    const renderPanel = () => {
-      const yearMonths = INDEX.months.filter((m) => m.startsWith(String(panelYear)));
-      const hasPrevYear = INDEX.months.some((m) => Number(m.slice(0, 4)) < panelYear);
-      const hasNextYear = INDEX.months.some((m) => Number(m.slice(0, 4)) > panelYear);
+    const go = (key) => { closePanel(); location.hash = `#/${key}`; };
 
-      panel.innerHTML = "";
+    const renderHead = (label) => {
+      const hasPrev = INDEX.months.some((m) => Number(m.slice(0, 4)) < panelYear);
+      const hasNext = INDEX.months.some((m) => Number(m.slice(0, 4)) > panelYear);
       const head = el("div", "picker-head");
-      const yPrev = el("button", "picker-yr-nav", "‹"); yPrev.type = "button"; yPrev.disabled = !hasPrevYear;
-      const yNext = el("button", "picker-yr-nav", "›"); yNext.type = "button"; yNext.disabled = !hasNextYear;
-      yPrev.addEventListener("click", () => { panelYear -= 1; renderPanel(); });
-      yNext.addEventListener("click", () => { panelYear += 1; renderPanel(); });
-      head.append(yPrev, el("span", "picker-yr disp", String(panelYear)), yNext);
-      panel.appendChild(head);
+      const yPrev = el("button", "picker-yr-nav", "‹"); yPrev.type = "button"; yPrev.disabled = !hasPrev;
+      const yNext = el("button", "picker-yr-nav", "›"); yNext.type = "button"; yNext.disabled = !hasNext;
+      yPrev.addEventListener("click", () => { panelYear -= 1; renderBody(); });
+      yNext.addEventListener("click", () => { panelYear += 1; renderBody(); });
+      head.append(yPrev, el("span", "picker-yr disp", label), yNext);
+      return head;
+    };
 
+    const renderEnglish = (body) => {
+      const yearMonths = INDEX.months.filter((m) => m.startsWith(String(panelYear) + "-"));
+      body.appendChild(renderHead(String(panelYear)));
       const grid = el("div", "picker-grid");
       for (let mo = 1; mo <= 12; mo++) {
         const key = `${panelYear}-${String(mo).padStart(2, "0")}`;
         const has = yearMonths.includes(key);
         const btn = el("button", `picker-mo disp${key === monthKey ? " current" : ""}`, MONTH_ABBR[mo - 1]);
         btn.type = "button";
-        if (!has) { btn.disabled = true; }
-        else btn.addEventListener("click", () => { closePanel(); location.hash = `#/${key}`; });
+        if (!has) btn.disabled = true;
+        else btn.addEventListener("click", () => go(key));
         grid.appendChild(btn);
       }
-      panel.appendChild(grid);
+      body.appendChild(grid);
+    };
+
+    const renderList = (body, kind) => {
+      body.appendChild(renderHead(String(panelYear)));
+      const list = el("div", "picker-list");
+      list.appendChild(el("div", "picker-loading disp", "Loading…"));
+      body.appendChild(list);
+      buildYearStarts(panelYear).then((starts) => {
+        // guard against a fast year-flick landing an old result
+        if (!panel || !body.isConnected) return;
+        const rows = kind === "ml" ? starts.ml : starts.lunar;
+        list.innerHTML = "";
+        if (!rows.length) {
+          list.appendChild(el("div", "picker-loading disp", "No data for this year."));
+          return;
+        }
+        rows.forEach((r) => {
+          const row = el("button",
+            `picker-row${r.monthKey === monthKey ? " current" : ""}${r.adhika ? " adhika" : ""}`);
+          row.type = "button";
+          const name = kind === "ml"
+            ? `<span class="r-name ml">${esc(r.ml)}</span>`
+            : `<span class="r-name latin disp">${esc(r.name)}</span>`;
+          const kv = (kind === "ml" && r.kvYear)
+            ? `<span class="r-kv disp">${esc(String(r.kvYear))}</span>` : "";
+          row.innerHTML =
+            `<span class="r-lead">${name}${kv}</span>` +
+            `<span class="r-when disp">${fmtStartWhen(r.date)}</span>`;
+          row.addEventListener("click", () => go(r.monthKey));
+          list.appendChild(row);
+        });
+        // bring the current month into view (the list can be a screenful)
+        const cur = list.querySelector(".picker-row.current");
+        if (cur) cur.scrollIntoView({ block: "center" });
+      });
+    };
+
+    const renderBody = () => {
+      const body = panel.querySelector(".picker-body");
+      body.innerHTML = "";
+      if (pickerTab === "ml") renderList(body, "ml");
+      else if (pickerTab === "lunar") renderList(body, "lunar");
+      else renderEnglish(body);
+    };
+
+    const renderPanel = () => {
+      panel.innerHTML = "";
+      if (scrim) panel.appendChild(el("div", "sheet-grip"));
+      if (scrim) panel.appendChild(el("div", "sheet-title disp", "Jump to month"));
+
+      const tabs = el("div", "picker-tabs");
+      tabs.setAttribute("role", "tablist");
+      const TABDEF = [
+        { id: "en", label: "English" },
+        { id: "ml", label: "Malayalam" },
+        { id: "lunar", label: "Lunar" },
+      ];
+      TABDEF.forEach((t) => {
+        const b = el("button", "picker-tab disp", esc(t.label));
+        b.type = "button";
+        b.setAttribute("role", "tab");
+        b.setAttribute("aria-selected", String(pickerTab === t.id));
+        b.addEventListener("click", () => {
+          if (pickerTab === t.id) return;
+          pickerTab = t.id;
+          panelYear = Number(monthKey.slice(0, 4));
+          tabs.querySelectorAll(".picker-tab").forEach((x, i) =>
+            x.setAttribute("aria-selected", String(TABDEF[i].id === pickerTab)));
+          renderBody();
+        });
+        tabs.appendChild(b);
+      });
+      panel.appendChild(tabs);
+
+      panel.appendChild(el("div", "picker-body"));
+      renderBody();
+
+      if (scrim) {
+        const close = el("button", "sheet-close disp", "Close");
+        close.type = "button";
+        close.addEventListener("click", () => { closePanel(); trigger.focus(); });
+        panel.appendChild(close);
+      }
     };
 
     trigger.addEventListener("click", () => {
       if (panel) { closePanel(); return; }
       panelYear = Number(monthKey.slice(0, 4));
-      panel = el("div", "picker-panel");
-      wrap.appendChild(panel);
+      const sheet = window.matchMedia("(max-width: 640px)").matches;
+      if (sheet) {
+        // Bottom sheet: scrim + panel both live inside .picker so every
+        // existing `.monthnav .picker-*` rule still applies; the sheet CSS
+        // (in the max-width:640px block) makes the scrim position:fixed.
+        scrim = el("div", "picker-scrim");
+        scrim.addEventListener("click", (e) => { if (e.target === scrim) { closePanel(); trigger.focus(); } });
+        panel = el("div", "picker-panel is-sheet");
+        scrim.appendChild(panel);
+        wrap.appendChild(scrim);
+        document.body.classList.add("sheet-open");
+      } else {
+        panel = el("div", "picker-panel");
+        wrap.appendChild(panel);
+      }
       renderPanel();
       trigger.setAttribute("aria-expanded", "true");
       document.addEventListener("mousedown", onOutside, true);
