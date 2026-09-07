@@ -666,13 +666,15 @@ a:hover { color: #7d2c20; }
   color: var(--vermilion);
 }
 /* Sanskrit amanta lunar-month name, on the day the month starts —
-   sits above the moon glyph, top-right of the cell. */
+   sits above the moon glyph, top-right of the cell. Muted variant names
+   the in-progress lunar month on the grid's first day. */
 .cell .aside .lunar-month {
   font-family: "Manjari", "Besley", serif;
   font-size: 12px;
   letter-spacing: 0.02em;
   color: var(--ink-2);
 }
+.cell .aside .lunar-month.muted { color: var(--muted); }
 
 .cell .pan {
   grid-column: 1 / -1;
@@ -993,7 +995,8 @@ a:hover { color: #7d2c20; }
   }
   .cell .pan .mstrip.muted { color: var(--muted); }
 
-  /* Sanskrit amanta lunar-month name, on the day the month starts */
+  /* Sanskrit amanta lunar-month name, on the day the month starts
+     (muted variant: the in-progress month on the list's first day) */
   .cell .pan .pan-lunar {
     display: block;
     font-family: "Manjari", "Besley", serif;
@@ -1002,6 +1005,7 @@ a:hover { color: #7d2c20; }
     color: var(--ink-2);
     line-height: 1.3;
   }
+  .cell .pan .pan-lunar.muted { color: var(--muted); }
 
   /* observances / holidays — vermilion, at the top of the panchangam column,
      above the nakshatram. Wraps to as many lines as it needs. */

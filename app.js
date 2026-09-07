@@ -180,9 +180,13 @@
     // Same text, second slot: the desktop cell shows it in .aside (top-right);
     // the phone list has no .aside, so it rides at the top of .pan in vermilion.
     const panFestHtml = fest ? `<div class="pan-fest ml">${esc(fest)}</div>` : "";
-    // Sanskrit amanta lunar-month name, only on the day the month begins.
-    const lunarHtml = d.lunarMonthStart
-      ? `<span class="lunar-month">${esc(d.lunarMonthStart)}</span>` : "";
+    // Sanskrit amanta lunar-month name: on the day the month begins, and —
+    // like the KV month tag — muted on the grid's first day so the
+    // in-progress lunar month is named too.
+    const lunarName = d.lunarMonthStart || (isFirst ? d.lunarMonth : "");
+    const lunarHtml = lunarName
+      ? `<span class="lunar-month${d.lunarMonthStart ? "" : " muted"}">${esc(lunarName)}</span>`
+      : "";
 
     // On a KV month-start day the KV date rides up to a strip in the content
     // column ("കുംഭം 1"), aligned with the nakshatram; the date column then
@@ -214,7 +218,7 @@
       `<div class="aside">${lunarHtml}${moon}${festHtml}</div>` +
       `<div class="pan">` +
         monthStrip +
-        (d.lunarMonthStart ? `<div class="pan-lunar">${esc(d.lunarMonthStart)}</div>` : "") +
+        (lunarName ? `<div class="pan-lunar${d.lunarMonthStart ? "" : " muted"}">${esc(lunarName)}</div>` : "") +
         panFestHtml +
         `<div class="nak ml">${esc(d.nak.ml)} <span class="nz">${d.nak.endNazhika}</span>` +
           (moon ? `<span class="moon-slot">${moon}</span>` : "") +
