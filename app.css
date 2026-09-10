@@ -99,8 +99,8 @@ a:hover { color: #7d2c20; }
 }
 
 @media (max-width: 640px) {
-  .site-header { padding: 13px 16px; }
-  .site-header .site-brand { font-size: 18px; }
+  .site-header { padding: 10px 16px; }
+  .site-header .site-brand { font-size: 17px; }
   .site-header .site-nav { gap: 16px; font-size: 10.5px; letter-spacing: 0.14em; }
 }
 
@@ -331,6 +331,7 @@ a:hover { color: #7d2c20; }
   font-size: 16px;
   color: #6b6154;
 }
+.monthnav .picker-trigger .pt-label { display: none; }   /* mobile only */
 .monthnav .picker-trigger .pt-caret { color: var(--faint); flex-shrink: 0; }
 .monthnav .picker-trigger[aria-expanded="true"] { background: #f0ece1; border-color: var(--faint); }
 
@@ -722,28 +723,36 @@ a:hover { color: #7d2c20; }
 @media (max-width: 640px) {
   .wrap { padding: 0; max-width: none; }
 
-  /* The brown band — site header + month masthead — stays pinned while the
-     day list scrolls under it. (overflow-x:hidden on <body> would break
-     position:sticky, so the mobile scroll clip lives on .grid instead.) */
+  /* Three layers stay pinned while the day list scrolls under them:
+       site-header  (brand + Home/About)
+       masthead     (‹ month · ML ›)          -> top: --hdr-h
+       monthnav     ([Today] [Go to month ▾]) -> top: --hdr-h + --band-h
+     syncStickyOffsets() in app.js measures the two upper layers after each
+     render and overwrites these vars, so the `top` chain has no seams even
+     if the fonts wrap differently. These values are just the first-paint
+     fallback. (overflow-x:hidden on <body> would break position:sticky, so
+     the mobile scroll clip lives on .grid instead.) */
+  :root { --hdr-h: 48px; --band-h: 78px; }
+
   .site-header {
     position: sticky;
     top: 0;
     z-index: 20;
   }
 
-  /* dark header band: ‹  January 2026 / ധനു – മകരം · 1201  ›  */
+  /* dark header band: ‹  September 2026 / ചിങ്ങം – കന്നി · Shravana  ›  */
   .masthead {
     position: sticky;
-    top: 44px;               /* sits just under the sticky .site-header */
+    top: var(--hdr-h);
     z-index: 19;
     background: var(--ink);
     color: #f4efe2;
     border-bottom: none;
-    padding: 18px 16px 16px;
+    padding: 10px 12px 9px;
     display: grid;
-    grid-template-columns: 34px 1fr 34px;
+    grid-template-columns: 30px 1fr 30px;
     align-items: center;
-    column-gap: 6px;
+    column-gap: 4px;
     /* horizontal swipe here pages months (attachMonthSwipe); keep the band
        from selecting text or firing the iOS callout mid-drag. Vertical
        panning still bubbles so the page scrolls normally. */
@@ -760,12 +769,12 @@ a:hover { color: #7d2c20; }
     appearance: none;
     border: none;
     background: transparent;
-    color: #b8ad97;
+    color: #a99d84;
     font-family: "Besley", Georgia, serif;
-    font-size: 22px;
+    font-size: 19px;
     line-height: 1;
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     cursor: pointer;
   }
   .masthead .mh-prev { grid-column: 1; grid-row: 1 / span 2; }
@@ -779,46 +788,79 @@ a:hover { color: #7d2c20; }
   }
   .masthead h1 {
     font-family: "Besley", Georgia, serif;
-    font-size: 27px;
+    font-size: 21px;
     font-weight: 500;
     color: #f4efe2;
     margin: 0;
-    line-height: 1.05;
+    line-height: 1.1;
+    letter-spacing: 0.005em;
   }
-  .masthead h1 em { color: #b8ad97; font-style: italic; }
+  .masthead h1 em { color: #b3a88f; font-style: italic; }
   .masthead .ml-months {
     grid-column: 2;
     grid-row: 2;
     text-align: center;
     font-family: "Manjari", "Besley", serif;
-    font-size: 13px;
-    color: #b8ad97;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #a99d84;
+    margin-top: 2px;
+    line-height: 1.35;
   }
   /* solar and lunar month names on one line; the year is dropped on mobile */
   .masthead .ml-months .names { display: inline; }
   .masthead .ml-months .lunar {
     display: inline;
     font-family: "Manjari", "Besley", serif;
-    font-size: 12px;
+    font-size: 11px;
     color: #8a7d64;
   }
   .masthead .ml-months .lunar::before { content: " · "; color: #6f6450; }
   .masthead .ml-months .yr { display: none; }
 
-  /* mobile nav: a single centred row under the dark header band —
-     [Today]   dd / mm / yyyy  [Go]   (the ‹ › and month title are in the band) */
+  /* mobile nav: two labelled pills, one line, pinned under the band:
+       [ Today ]   [ Go to month ▾ ]
+     The ‹ › and the month name live in the band above, so the picker
+     trigger here just says "Go to month" (pt-label; pt-main/dot/ml hidden). */
   .monthnav {
+    position: sticky;
+    top: calc(var(--hdr-h) + var(--band-h));
+    z-index: 18;
     margin: 0;
-    padding: 12px 12px 14px;
-    gap: 12px;
-    background: transparent;
+    padding: 8px 12px 9px;
+    gap: 9px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
   }
-  .monthnav .arrow { display: none; }              /* the dark band's ‹ › cover paging */
-  .monthnav .nav-row.nav-jump { gap: 12px; flex-wrap: wrap; }
-  .monthnav .today-btn { color: var(--vermilion); border-color: var(--vermilion); }
-  .monthnav .today-btn:hover { background: rgba(255,255,255,0.06); }
+  .monthnav .arrow { display: none; }              /* the band's ‹ › cover paging */
+  .monthnav .nav-row.nav-jump { gap: 9px; flex-wrap: nowrap; }
+
+  .monthnav .today-btn {
+    color: var(--vermilion);
+    border-color: var(--vermilion);
+    padding: 8px 15px;
+    font-size: 12px;
+    letter-spacing: 0.09em;
+  }
+  .monthnav .today-btn:hover { background: #f4e9e4; }
   .dd-back .today-btn:hover { background: rgba(38,32,25,0.05); }
+
+  .monthnav .picker-trigger {
+    gap: 7px;
+    padding: 8px 15px;
+  }
+  .monthnav .picker-trigger .pt-main,
+  .monthnav .picker-trigger .pt-dot,
+  .monthnav .picker-trigger .pt-ml { display: none; }
+  .monthnav .picker-trigger .pt-label {
+    display: inline;
+    font-family: "Besley", Georgia, serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
   .weekdays, .legend { display: none; }
 
   /* month picker on phones: a full-width bottom sheet over a scrim, instead
@@ -943,8 +985,10 @@ a:hover { color: #7d2c20; }
   .cell.today { box-shadow: inset 0 0 0 2px var(--vermilion); }        /* full outline on today */
   .cell.today.lunar-start,
   .cell.today.month-start { box-shadow: inset 0 0 0 2px var(--vermilion); }
-  /* keep today's row clear of the pinned header band when scrolled to */
-  .cell.today { scroll-margin-top: 160px; }
+  /* keep a scrolled-to day clear of the three pinned layers (header + band +
+     nav row). positionMonthList measures exactly; this covers native anchor
+     jumps and is the sum of --hdr-h + --band-h + the ~44px nav row + slack. */
+  .cell { scroll-margin-top: 150px; }
 
   .cell .head,
   .cell .aside { display: none; }

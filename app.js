@@ -167,6 +167,31 @@
     wrap.appendChild(leg);
 
     app.appendChild(wrap);
+    syncStickyOffsets();
+  }
+
+  // Three sticky layers stack on mobile (site-header / masthead / monthnav).
+  // Their exact heights depend on fonts + wrap, so rather than hardcode the
+  // `top:` chain we measure the two upper layers after each render and write
+  // --hdr-h / --band-h; the CSS `top` calcs read those. Desktop ignores them.
+  function syncStickyOffsets() {
+    if (!window.matchMedia("(max-width: 640px)").matches) return;
+    requestAnimationFrame(() => {
+      const h = (sel) => {
+        const n = document.querySelector(sel);
+        return n ? Math.round(n.getBoundingClientRect().height) : 0;
+      };
+      const root = document.documentElement.style;
+      const hdr = h(".site-header");
+      const band = h(".masthead");
+      if (hdr) root.setProperty("--hdr-h", hdr + "px");
+      if (band) root.setProperty("--band-h", band + "px");
+    });
+  }
+  window.addEventListener("resize", syncStickyOffsets);
+  // web fonts change the layer heights after first paint; re-measure once ready
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(syncStickyOffsets);
   }
 
   function dayCell(d, isFirst, doc) {
@@ -482,7 +507,11 @@
     trigger.type = "button";
     trigger.setAttribute("aria-haspopup", "true");
     trigger.setAttribute("aria-expanded", "false");
+    // Desktop shows the current month (pt-main/dot/ml); phones show the plain
+    // "Go to month" label instead (pt-label) — the month is already in the
+    // pinned band right above. CSS in the max-width:640px block does the swap.
     trigger.innerHTML =
+      `<span class="pt-label disp">Go to month</span>` +
       `<span class="pt-main">${esc(gregorianText)}</span>` +
       `<span class="pt-dot">•</span>` +
       `<span class="pt-ml ml">${esc(mlText)}</span>` +
@@ -592,7 +621,7 @@
     const renderPanel = () => {
       panel.innerHTML = "";
       if (scrim) panel.appendChild(el("div", "sheet-grip"));
-      if (scrim) panel.appendChild(el("div", "sheet-title disp", "Jump to month"));
+      if (scrim) panel.appendChild(el("div", "sheet-title disp", "Go to month"));
 
       const tabs = el("div", "picker-tabs");
       tabs.setAttribute("role", "tablist");
@@ -718,11 +747,11 @@
 
     if (!cell) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
 
-    const header = document.querySelector(".site-header");
-    const band = document.querySelector(".masthead");
-    const pinned =
-      (header ? header.getBoundingClientRect().height : 0) +
-      (band ? band.getBoundingClientRect().height : 0);
+    // clear all three pinned layers: site-header + masthead + the nav-pill row
+    const pinned = [".site-header", ".masthead", ".monthnav"].reduce((h, sel) => {
+      const n = document.querySelector(sel);
+      return h + (n ? n.getBoundingClientRect().height : 0);
+    }, 0);
     const y = cell.getBoundingClientRect().top + window.scrollY - pinned - 8;
     window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
   }
