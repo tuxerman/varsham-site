@@ -744,6 +744,13 @@ a:hover { color: #7d2c20; }
     grid-template-columns: 34px 1fr 34px;
     align-items: center;
     column-gap: 6px;
+    /* horizontal swipe here pages months (attachMonthSwipe); keep the band
+       from selecting text or firing the iOS callout mid-drag. Vertical
+       panning still bubbles so the page scrolls normally. */
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
   .masthead .mh-prev,
   .masthead .mh-next {

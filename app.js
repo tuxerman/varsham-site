@@ -107,6 +107,7 @@
       `<span class="yr">${years}</span>`
     ));
     mast.appendChild(mhNext);
+    attachMonthSwipe(mast, nb);
     wrap.appendChild(mast);
 
     // month nav — one row, all controls equal weight:
@@ -171,6 +172,7 @@
   function dayCell(d, isFirst, doc) {
     const wknd = d.wd === "Sun" ? "sun" : (d.wd === "Sat" ? "sat" : "");
     const cell = el("div", `cell clickable ${wknd}${d.monthStart ? " month-start" : ""}${d.lunarMonthStart ? " lunar-start" : ""}${d.date === todayISO() ? " today" : ""}`);
+    cell.dataset.date = d.date;   // used by positionMonthList to scroll to a day
     // navigate to the day so the URL is shareable; route() opens the detail
     cell.addEventListener("click", () => { location.hash = `#/${d.date}`; });
 
@@ -403,6 +405,11 @@
   // who thinks in Kollavarsham isn't re-picking "Malayalam" every time.
   let pickerTab = "en";  // "en" | "ml" | "lunar"
 
+  // When a Malayalam/lunar month is picked, we route to the Gregorian month it
+  // begins in and want the phone list to land on that start day (like "Today"
+  // does for the current month). route() reads and clears this after render.
+  let pendingScrollDate = null;  // "YYYY-MM-DD" | null
+
   // Malayalam solar month number (Chingam = 1) — only used to work out which
   // Kollavarsham year a month-start day belongs to for its caption.
   const ML_MONTH_NO = {
@@ -502,7 +509,14 @@
     };
     const onKey = (e) => { if (e.key === "Escape") { closePanel(); trigger.focus(); } };
 
-    const go = (key) => { closePanel(); location.hash = `#/${key}`; };
+    // startDate: when a ML/lunar month is picked, the phone list should scroll
+    // to the day that month begins (route -> positionMonthList reads this).
+    const go = (key, startDate) => {
+      pendingScrollDate = startDate || null;
+      closePanel();
+      if (location.hash === `#/${key}`) route();   // same month: re-run to scroll
+      else location.hash = `#/${key}`;
+    };
 
     const renderHead = (label) => {
       const hasPrev = INDEX.months.some((m) => Number(m.slice(0, 4)) < panelYear);
@@ -558,7 +572,7 @@
           row.innerHTML =
             `<span class="r-lead">${name}${kv}</span>` +
             `<span class="r-when disp">${fmtStartWhen(r.date)}</span>`;
-          row.addEventListener("click", () => go(r.monthKey));
+          row.addEventListener("click", () => go(r.monthKey, r.date));
           list.appendChild(row);
         });
         // bring the current month into view (the list can be a screenful)
@@ -647,19 +661,63 @@
     return INDEX.months.includes(key) ? key : INDEX.months[0];
   }
 
-  // On phones the day list is long; after rendering the current month with no
-  // Phone-only list positioning after a month renders:
-  //   - current month, no day open -> glide today's row under the pinned band
-  //   - any other month            -> return to the top (Today / month picker)
+  // Phone-only: a horizontal swipe on the dark masthead band pages months,
+  // same as the ‹ › buttons. Scoped to the band (not the day list, which is a
+  // vertical scroller) and it never calls preventDefault, so the OS back /
+  // forward edge-swipes are untouched. left swipe -> next, right -> prev.
+  function attachMonthSwipe(mast, nb) {
+    let x0 = null, y0 = null, t0 = 0, lock = null;  // lock: null | "x" | "y"
+    const DECIDE = 12;   // px of movement before we commit to an axis
+    const GO = 55;       // px of horizontal travel to count as a swipe
+    const MAX_MS = 700;  // ignore slow drags
+
+    mast.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) { x0 = null; return; }
+      const t = e.touches[0];
+      x0 = t.clientX; y0 = t.clientY; t0 = Date.now(); lock = null;
+    }, { passive: true });
+
+    mast.addEventListener("touchmove", (e) => {
+      if (x0 == null || lock === "y") return;
+      const t = e.touches[0];
+      const dx = t.clientX - x0, dy = t.clientY - y0;
+      if (lock == null && Math.abs(dx) + Math.abs(dy) > DECIDE) {
+        lock = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      }
+    }, { passive: true });   // passive: never blocks native gestures
+
+    mast.addEventListener("touchend", (e) => {
+      if (x0 == null) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - x0, dy = t.clientY - y0;
+      const ok = lock === "x" && Date.now() - t0 <= MAX_MS &&
+                 Math.abs(dx) >= GO && Math.abs(dx) > Math.abs(dy) * 1.5;
+      x0 = null;
+      if (!ok) return;
+      const target = dx < 0 ? nb.next : nb.prev;   // swipe left -> forward
+      if (target) location.hash = `#/${target}`;
+    }, { passive: true });
+  }
+
+  // Phone-only list positioning after a month renders. Glide one day-cell up
+  // under the pinned band; which cell depends on how we got here:
+  //   - a picked Malayalam/lunar month -> the day that month begins
+  //   - the current month, no day open -> today's row
+  //   - any other month                -> the first day of the month
   // Desktop grid barely scrolls, so this is a no-op there.
-  function positionMonthList(want, hasDay) {
+  function positionMonthList(want, hasDay, startDate) {
     if (!window.matchMedia("(max-width: 640px)").matches) return;
-    if (want !== todayISO().slice(0, 7) || hasDay) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
+
+    let cell = null;
+    if (startDate && startDate.slice(0, 7) === want) {
+      cell = app.querySelector(`.cell[data-date="${startDate}"]`);
+    } else if (want === todayISO().slice(0, 7) && !hasDay) {
+      cell = app.querySelector(".cell.today");
     }
-    const cell = app.querySelector(".cell.today");
+    if (!cell && !hasDay) cell = app.querySelector(".cell.clickable");   // day 1
+
     if (!cell) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+
     const header = document.querySelector(".site-header");
     const band = document.querySelector(".masthead");
     const pinned =
@@ -699,10 +757,14 @@
       } else if (dlg.open) {
         dlg.close();
       }
-      // on phones, re-position the freshly rendered month list (scroll to
-      // today for the current month, back to the top for any other).
-      if ((isBoot || monthChanged) && !day) {
-        requestAnimationFrame(() => positionMonthList(want, false));
+      // on phones, re-position the freshly rendered month list; positionMonthList
+      // picks the target cell (picked month-start / today / first of month).
+      // Also runs when the picked month is the one already shown (monthChanged
+      // false) so the scroll-to-start still happens.
+      const scrollTo = pendingScrollDate;
+      pendingScrollDate = null;   // one-shot: this render only
+      if ((isBoot || monthChanged || scrollTo) && !day) {
+        requestAnimationFrame(() => positionMonthList(want, false, scrollTo));
       }
     } catch (err) {
       app.innerHTML = `<div class="loading">Could not load ${esc(want)}.<br>${esc(err.message)}</div>`;
